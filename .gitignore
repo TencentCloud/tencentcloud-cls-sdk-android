@@ -1,0 +1,6 @@
+.idea
+*.iml
+*.pyc
+**/*.log
+.gradle
+**/build/**

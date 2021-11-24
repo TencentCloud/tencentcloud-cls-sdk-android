@@ -1,0 +1,44 @@
+// 集中定义包名
+group = 'com.tencent.cls'
+version = project.baseVersion
+
+project.ext.uploadRepo = project.releaseUploadRepo
+if (!'release'.equals(project.versionType)) {
+    version += '-SNAPSHOT'      // 对于debug类型版本，版本号加"-SNAPSHOT"后辍
+    uploadRepo = project.debugUploadRepo
+}
+
+subprojects {
+    group = rootProject.group   // 将包名设置到所有的子工程
+}
+
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.0.0"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        mavenLocal()
+        maven { url "https://mirrors.tencent.com/repository/maven/tencent_public" }
+        maven { url "https://mirrors.tencent.com/repository/maven/qimei" }
+        maven {	url "https://mirrors.tencent.com/repository/maven/qmsp-oaid2" }
+        maven {
+            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+        }
+        google()
+    }
+}
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

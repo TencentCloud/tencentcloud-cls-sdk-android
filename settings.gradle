@@ -1,0 +1,4 @@
+include ':tencent_cls_producer'
+include ':cls_android_sdk'
+include ':app'
+rootProject.name = "ClsAndroidSDK"
