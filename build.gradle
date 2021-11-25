@@ -1,5 +1,5 @@
 // 集中定义包名
-group = 'com.tencent.cls'
+group = 'com.tencentcloudapi.cls'
 version = project.baseVersion
 
 project.ext.uploadRepo = project.releaseUploadRepo
