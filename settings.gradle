@@ -1,4 +1,12 @@
-include ':tencent_cls_producer'
-include ':cls_android_sdk'
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Warning: this repository is going to shut down soon
+    }
+}
+rootProject.name = "tencentcloud-cls-sdk-android"
 include ':app'
-rootProject.name = "ClsAndroidSDK"
+include ':tencentcloud_cls_producer'
+include ':cls_plugin_network_diagnosis'
