@@ -1,5 +1,71 @@
 plugins {
     id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier.set("sources")
+    exclude "**/R.class"
+    exclude "**/BuildConfig.class"
+}
+//signing {
+//    sign publishing.publications
+//}
+
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId = 'com.tencentcloudapi.cls'
+                artifactId = 'cls-android-network-diagnosis-reporter'
+                version = '1.0.1'
+                from components.release
+                artifact sourcesJar
+
+                pom {
+                    name = artifactId
+                    description = "tencent cloud cls log sdk"
+                    url = 'https://github.com/TencentCloud/tencentcloud-cls-sdk-android'
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'farmerx'
+                            name = 'farmerx'
+                            email = 'farmerx@163.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git://github.com/TencentCloud/tencentcloud-cls-sdk-android.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/TencentCloud/tencentcloud-cls-sdk-android.git'
+                        url = 'https://github.com/TencentCloud/tencentcloud-cls-sdk-android/'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
+                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                allowInsecureProtocol(true)
+                credentials {
+                    username = ''
+                    password = ''
+                }
+                authentication{
+                    basic(BasicAuthentication)
+                }
+            }
+        }
+    }
 }
 
 android {
@@ -9,7 +75,7 @@ android {
         minSdk 21
         targetSdk 31
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -25,7 +91,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
 }
 
 dependencies {

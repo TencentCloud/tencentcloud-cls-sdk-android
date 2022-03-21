@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tencentcloudapi.cls.plugin.IPlugin;
-//import com.tencentcloudapi.cls.producer.HttpConfigProxy;
 
 /**
  * @author farmerx
