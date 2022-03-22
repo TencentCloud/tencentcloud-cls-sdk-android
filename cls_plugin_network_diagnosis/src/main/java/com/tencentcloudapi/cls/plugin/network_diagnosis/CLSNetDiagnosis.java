@@ -104,6 +104,7 @@ public class CLSNetDiagnosis {
 
     /**
      * @param domain   目标 host，如 cloud.tencent.com
+     * @param output   输出 callback
      * @param callback 回调 callback
      */
     public void ping(String domain, Output output, Callback callback) {
@@ -114,6 +115,7 @@ public class CLSNetDiagnosis {
      * @param domain   目标 host，如 cloud.tencent.com
      * @param maxTimes 探测的次数
      * @param size     探测包体积
+     * @param output   输出 callback
      * @param callback 回调 callback
      */
     public void ping(String domain, int maxTimes, int size, Output output, Callback callback) {
@@ -128,6 +130,7 @@ public class CLSNetDiagnosis {
     /**
      * @param domain   目标 host，如：cloud.tencent.com
      * @param port     目标端口，如：80
+     * @param output   输出 callback
      * @param callback 回调 callback
      */
     public void tcpPing(String domain, int port, Output output, Callback callback) {

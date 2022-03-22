@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         config.debuggable = true;
         adapter.init(config);
 
-        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
+        CLSNetDiagnosis.getInstance().ping("www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
             @Override
             public void write(String line) {
                 System.out.println(line);
@@ -40,10 +40,8 @@ public class MainActivity extends AppCompatActivity {
         }, new CLSNetDiagnosis.Callback() {
             @Override
             public void onComplete(String result) {
-
                 // result为探测结果，JSON格式。
                 CLSLog.d("hh-----------h", String.format("ping result: %s", result));
-                CLSLog.w("hh-----------h", String.format("ping result: %s", result));
             }
         });
 
