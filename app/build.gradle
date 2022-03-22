@@ -31,8 +31,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
-    implementation project(path: ':cls_plugin_network_diagnosis')
-    implementation project(path: ':tencentcloud_cls_producer')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-android-network-diagnosis-reporter', version: '1.0.4')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-log-android-sdk', version: '1.0.4')
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'

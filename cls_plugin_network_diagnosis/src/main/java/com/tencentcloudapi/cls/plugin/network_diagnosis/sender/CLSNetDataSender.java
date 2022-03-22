@@ -3,16 +3,16 @@ package com.tencentcloudapi.cls.plugin.network_diagnosis.sender;
 import android.text.TextUtils;
 import android.util.TimeUtils;
 
-import com.tencentcloudapi.cls.CLSConfig;
-import com.tencentcloudapi.cls.CLSLog;
-import com.tencentcloudapi.cls.plugin.ISender;
-import com.tencentcloudapi.cls.producer.AsyncProducerClient;
-import com.tencentcloudapi.cls.producer.AsyncProducerConfig;
-import com.tencentcloudapi.cls.producer.common.LogContent;
-import com.tencentcloudapi.cls.producer.common.LogItem;
-import com.tencentcloudapi.cls.producer.errors.ProducerException;
-import com.tencentcloudapi.cls.producer.util.NetworkUtils;
-import com.tencentcloudapi.cls.scheme.Scheme;
+import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.plugin.ISender;
+import com.tencentcloudapi.cls.android.producer.AsyncProducerClient;
+import com.tencentcloudapi.cls.android.producer.AsyncProducerConfig;
+import com.tencentcloudapi.cls.android.producer.common.LogContent;
+import com.tencentcloudapi.cls.android.producer.common.LogItem;
+import com.tencentcloudapi.cls.android.producer.errors.ProducerException;
+import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
+import com.tencentcloudapi.cls.android.scheme.Scheme;
 
 import java.io.File;
 import java.util.ArrayList;

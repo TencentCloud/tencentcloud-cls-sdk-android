@@ -20,7 +20,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'tencentcloud-log-android-sdk'
-                version = '1.0.1'
+                version = '1.0.4'
                 from components.release
                 artifact sourcesJar
 
@@ -56,7 +56,7 @@ afterEvaluate {
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 allowInsecureProtocol(true)
                 credentials {
-                    username = ''
+                    username = 'albertbi'
                     password = ''
                 }
                 authentication{

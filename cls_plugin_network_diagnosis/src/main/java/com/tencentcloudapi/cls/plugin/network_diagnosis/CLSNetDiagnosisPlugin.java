@@ -1,9 +1,9 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis;
 
 
-import com.tencentcloudapi.cls.CLSConfig;
-import com.tencentcloudapi.cls.plugin.AbstractPlugin;
-import com.tencentcloudapi.cls.plugin.ISender;
+import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
+import com.tencentcloudapi.cls.android.plugin.ISender;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.sender.CLSNetDataSender;
 
 public class CLSNetDiagnosisPlugin extends AbstractPlugin {

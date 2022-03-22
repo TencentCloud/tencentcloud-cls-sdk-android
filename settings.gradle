@@ -1,6 +1,9 @@
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven { url "https://mirrors.tencent.com/repository/maven/tencent_public" }
+        maven { url "https://mirrors.tencent.com/repository/maven/thirdparty" }
+        maven { url "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots" }
         google()
         mavenCentral()
         jcenter() // Warning: this repository is going to shut down soon

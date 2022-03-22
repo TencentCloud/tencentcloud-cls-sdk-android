@@ -4,8 +4,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
+import com.tencentcloudapi.cls.android.CLSAdapter;
+import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosis;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosisPlugin;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         config.endpoint = "ap-guangzhou.cls.tencentcs.com";
         config.accessKeyId = "";
         config.accessKeySecret = "";
-        config.pluginAppId = "";
+        config.pluginAppId = "123456";
         config.topicId = "";
         // 发布时，建议关闭，即配置为config.debuggable = false。
         config.debuggable = true;

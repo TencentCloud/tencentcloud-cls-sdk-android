@@ -32,13 +32,6 @@ import android.view.Display;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.tencentcloudapi.cls.producer.AsyncProducerClient;
-import com.tencentcloudapi.cls.producer.AsyncProducerConfig;
-import com.tencentcloudapi.cls.producer.common.LogContent;
-import com.tencentcloudapi.cls.producer.common.LogItem;
-import com.tencentcloudapi.cls.producer.errors.ProducerException;
-import com.tencentcloudapi.cls.producer.util.NetworkUtils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

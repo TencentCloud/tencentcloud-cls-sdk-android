@@ -5,12 +5,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import org.json.JSONObject;
-import com.tencentcloudapi.cls.CLSConfig;
-import com.tencentcloudapi.cls.CLSLog;
-import com.tencentcloudapi.cls.JsonUtil;
-import com.tencentcloudapi.cls.plugin.ISender;
+import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.JsonUtil;
+import com.tencentcloudapi.cls.android.plugin.ISender;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Diagnosis;
-import com.tencentcloudapi.cls.scheme.Scheme;
+import com.tencentcloudapi.cls.android.scheme.Scheme;
 
 public class CLSNetDiagnosis {
     private static final String TAG = "CLSNetwork";
