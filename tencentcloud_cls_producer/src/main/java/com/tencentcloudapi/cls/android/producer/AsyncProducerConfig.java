@@ -22,6 +22,8 @@ public class AsyncProducerConfig {
 
     private String secretKey;
 
+    private String secretToken;
+
     private String sourceIp;
 
     private String topicId;
@@ -80,8 +82,13 @@ public class AsyncProducerConfig {
         this.secretKey = secretKey;
         this.sourceIp = sourceIp;
         this.context = context;
-        if (sourceIp == null || sourceIp.isEmpty()) {
+        if (null == sourceIp  || sourceIp.isEmpty()) {
             this.sourceIp = NetworkUtils.getLocalMachineIP();
+        }
+
+        this.secretToken = secretToken;
+        if (null == this.secretToken || this.secretToken.isEmpty()) {
+            this.secretToken = "";
         }
     }
 
@@ -118,6 +125,13 @@ public class AsyncProducerConfig {
     }
 
     /**
+     * 获取Tencent Cloud Secret Token
+     * @return
+     */
+    public String getSecretToken() {
+        return this.secretToken;
+    }
+    /**
      * 获取本机Ip， 可以是自己设置的
      * @return
      */
@@ -150,6 +164,45 @@ public class AsyncProducerConfig {
         }
         this.totalSizeInBytes = totalSizeInBytes;
     }
+
+    /**
+     * @param accessKeyId
+     * @param accessKeySecret
+     * @param securityToken
+     */
+    public void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
+        Args.notNullOrEmpty(accessKeyId, "secretId");
+        Args.notNullOrEmpty(accessKeySecret, "secretKey");
+        this.secretId = accessKeyId;
+        this.secretKey = accessKeySecret;
+        this.secretToken = securityToken;
+        if (null == this.secretToken || this.secretToken.isEmpty()) {
+            this.secretToken = "";
+        }
+    }
+
+    public void resetTopicID(String endpoint, String topicId) {
+        Args.notNullOrEmpty(endpoint, "endpoint");
+        Args.notNullOrEmpty(topicId, "topicId");
+        if (endpoint.startsWith("http://")) {
+            this.hostName = endpoint.substring(7);
+            this.httpType = "http://";
+        } else if (endpoint.startsWith("https://")) {
+            this.hostName = endpoint.substring(8);
+            this.httpType = "https://";
+        } else {
+            this.hostName = endpoint;
+            this.httpType = "http://";
+        }
+        while (this.hostName.endsWith("/")) {
+            this.hostName = this.hostName.substring(0, this.hostName.length() - 1);
+        }
+        if (NetworkUtils.isIPAddr(this.hostName)) {
+            throw new IllegalArgumentException("EndpointInvalid", new Exception("The ip address is not supported"));
+        }
+        this.topicId = topicId;
+    }
+
 
     /**
      * 获取日志合并最大等待时间

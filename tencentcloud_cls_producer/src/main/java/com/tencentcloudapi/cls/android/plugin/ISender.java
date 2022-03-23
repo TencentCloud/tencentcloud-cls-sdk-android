@@ -24,8 +24,7 @@ public interface ISender {
     /**
      * reset project configuration
      * @param endpoint endpoint of this project. should start with 'https://' prefix
-     * @param project project name
-     * @param logstore logstore name
+     * @param topicID topicID name
      */
-    void resetProject(String endpoint, String project, String logstore);
+    void resetTopicID(String endpoint, String topicID);
 }

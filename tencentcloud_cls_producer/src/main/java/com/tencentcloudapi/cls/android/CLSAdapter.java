@@ -88,9 +88,9 @@ public class CLSAdapter {
         }
     }
 
-    public void resetProject(String endpoint, String topicId) {
+    public void resetTopicID(String endpoint, String topicId) {
         for (IPlugin plugin : plugins) {
-            plugin.resetProject(endpoint, topicId);
+            plugin.resetTopicID(endpoint, topicId);
         }
     }
 

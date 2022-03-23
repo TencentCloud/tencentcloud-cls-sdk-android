@@ -67,6 +67,24 @@ public class CLSNetDiagnosis {
         this.sender = sender;
     }
 
+    /**
+     * @param accessKeyId
+     * @param accessKeySecret
+     * @param securityToken
+     */
+    void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
+        this.sender.resetSecurityToken(accessKeyId, accessKeySecret, securityToken);
+    }
+
+    /**
+     * @param endpoint
+     * @param topicId
+     */
+     void resetTopicID(String endpoint, String topicId) {
+         this.sender.resetTopicID(endpoint, topicId);
+    }
+
+
     private CLSNetDiagnosis() {
         handler = new Handler(Looper.getMainLooper());
     }

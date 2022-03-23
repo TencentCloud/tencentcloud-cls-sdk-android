@@ -25,5 +25,16 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
         sender.init(config);
         CLSNetDiagnosis.getInstance().init(config, sender);
     }
+
+    @Override
+    public void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
+        CLSNetDiagnosis.getInstance().resetSecurityToken(accessKeyId, accessKeySecret, securityToken);
+    }
+
+    @Override
+    public void resetTopicID(String endpoint, String topicId) {
+        CLSNetDiagnosis.getInstance().resetTopicID(endpoint, topicId);
+    }
+
 }
 

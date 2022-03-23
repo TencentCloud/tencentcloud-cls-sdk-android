@@ -20,7 +20,7 @@ public abstract class AbstractPlugin implements IPlugin {
     }
 
     @Override
-    public void resetProject(String endpoint, String topicId) {
+    public void resetTopicID(String endpoint, String topicId) {
 
     }
 

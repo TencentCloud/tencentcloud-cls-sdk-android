@@ -27,7 +27,10 @@ public class Request implements Serializable {
 	 * @return value of the key
 	 */
 	public String GetParam(String key) {
-		return mParams.getOrDefault(key, "");
+		if (mParams.containsKey(key)) {
+			return mParams.get(key);
+		}
+		return "";
 	}
 
 	/**

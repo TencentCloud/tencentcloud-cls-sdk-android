@@ -18,7 +18,7 @@ public interface IPlugin {
 
     void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken);
 
-    void resetProject(String endpoint, String topicId);
+    void resetTopicID(String endpoint, String topicId);
 
     void updateConfig(CLSConfig config);
 }

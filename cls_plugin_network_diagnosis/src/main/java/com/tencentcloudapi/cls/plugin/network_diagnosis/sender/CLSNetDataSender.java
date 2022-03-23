@@ -1,8 +1,5 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis.sender;
 
-import android.text.TextUtils;
-import android.util.TimeUtils;
-
 import com.tencentcloudapi.cls.android.CLSConfig;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.plugin.ISender;
@@ -76,10 +73,16 @@ public class CLSNetDataSender implements ISender {
         }
         logItems.add(logItem);
         try {
-            producerClient.putLogs(this.clsConfig.topicId, logItems, result -> System.out.println(result.toString()));
-            if (clsConfig.debuggable) {
-                CLSLog.v(TAG, "add log success.");
-            }
+            producerClient.putLogs(this.clsConfig.topicId, logItems, result -> {
+                if (!result.isSuccessful()) {
+                    CLSLog.e(TAG, result);
+                } else {
+                    if (clsConfig.debuggable) {
+                        CLSLog.d(TAG, result);
+                    }
+                }
+            });
+
         } catch (ProducerException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -90,11 +93,11 @@ public class CLSNetDataSender implements ISender {
 
     @Override
     public void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
-
+        producerConfig.resetSecurityToken(accessKeyId, accessKeySecret, securityToken);
     }
 
     @Override
-    public void resetProject(String endpoint, String project, String logstore) {
-
+    public void resetTopicID(String endpoint, String topicId) {
+        producerConfig.resetTopicID(endpoint, topicId);
     }
 }
