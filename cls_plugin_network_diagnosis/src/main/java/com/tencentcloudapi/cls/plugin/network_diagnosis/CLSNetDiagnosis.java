@@ -9,6 +9,8 @@ import com.tencentcloudapi.cls.android.CLSConfig;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.JsonUtil;
 import com.tencentcloudapi.cls.android.plugin.ISender;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.CommandRunner;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.net.traceroute.Traceroute;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Diagnosis;
 import com.tencentcloudapi.cls.android.scheme.Scheme;
 
@@ -26,7 +28,14 @@ public class CLSNetDiagnosis {
         PING,
         TCPPING,
         MTR,
-        HTTP
+        HTTP,
+        TRACEROUTE,
+    }
+
+    private final CommandRunner CommandRunner = new CommandRunner();
+
+    public void CommandRunner() {
+        CommandRunner.start();
     }
 
     private ISender sender;
@@ -47,7 +56,6 @@ public class CLSNetDiagnosis {
     }
 
     private static class TaskIdGenerator {
-
         private final String prefix = String.valueOf(System.nanoTime());
         private long index = 0;
 
@@ -65,6 +73,7 @@ public class CLSNetDiagnosis {
     void init(CLSConfig config, ISender sender) {
         this.config = config;
         this.sender = sender;
+        CommandRunner();
     }
 
     /**
@@ -108,11 +117,12 @@ public class CLSNetDiagnosis {
             JsonUtil.putOpt(reserves, "method", "MTR");
         } else if (type == Type.HTTP) {
             JsonUtil.putOpt(reserves, "method", "HTTP");
-        } else {
+        } else if (type == Type.TRACEROUTE) {
+            JsonUtil.putOpt(reserves, "method", "TRACEROUTE");
+        }else {
             JsonUtil.putOpt(reserves, "method", "UNKNOWN");
         }
         scheme.reserves = reserves.toString();
-
         sender.send(scheme);
 
         if (null != callback) {
@@ -169,6 +179,47 @@ public class CLSNetDiagnosis {
                 report(Type.TCPPING, result, callback);
             }
         });
+    }
+
+    /**
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param output 输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, Output output, Callback callback) {
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TRACEROUTE, result, callback);
+            }
+        }, output);
+        traceroute(traceroute);
+    }
+
+    /**
+     *
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param maxHop
+     * @param countPerRoute
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, int maxHop, int countPerRoute, Output output, Callback callback) {
+        Traceroute.Config config =  new Traceroute.Config(domain);
+        config.setMaxHop(maxHop);
+        config.setCountPerRoute(countPerRoute);
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), callback, output);
+        traceroute(traceroute);
+    }
+
+    private void traceroute(Traceroute traceroute) {
+        if (traceroute == null)
+            throw new NullPointerException("The parameter (traceroute) is null !");
+
+        if (CommandRunner != null && CommandRunner.isAlive()) {
+            boolean res = CommandRunner.addCommand(traceroute);
+            CLSLog.d(TAG, "[add task traceroute]: " + traceroute.getConfig().getTargetHost() + " res:" + res);
+        }
     }
 
     /**

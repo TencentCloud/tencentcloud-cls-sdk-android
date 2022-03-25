@@ -5,6 +5,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -25,5 +27,19 @@ public final class Utils {
      static String getIp(String host) throws UnknownHostException {
         InetAddress i = InetAddress.getByName(host);
         return i.getHostAddress();
+    }
+
+    public static void closeAllCloseable(Closeable... closeables) {
+        if (closeables == null || closeables.length <= 0)
+            return;
+
+        for (Closeable closeable : closeables) {
+            if (closeable != null)
+                try {
+                    closeable.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
     }
 }

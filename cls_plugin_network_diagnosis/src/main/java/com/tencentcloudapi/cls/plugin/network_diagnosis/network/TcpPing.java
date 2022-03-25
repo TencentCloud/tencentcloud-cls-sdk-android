@@ -218,6 +218,7 @@ public final class TcpPing implements Task {
                 o.putOpt("sum", String.format("%.2f", this.sumTime));
                 o.put("loss", this.dropped);
                 o.put("count", this.count);
+                o.put("timestamp",  System.currentTimeMillis() / 1000);
                 return o.toString();
             } catch (JSONException err) {
                 err.printStackTrace();

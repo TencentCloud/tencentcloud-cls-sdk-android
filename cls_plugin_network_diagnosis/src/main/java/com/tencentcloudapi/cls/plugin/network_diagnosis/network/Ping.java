@@ -262,7 +262,7 @@ public final class Ping implements Task {
                 o.put("size", this.size);
                 o.put("responseNum", this.sent);
                 o.put("interval", this.interval);
-//                o.put("result", this.result);
+                o.put("timestamp",  System.currentTimeMillis() / 1000);
                 return o.toString();
             } catch (JSONException err) {
                 err.printStackTrace();
