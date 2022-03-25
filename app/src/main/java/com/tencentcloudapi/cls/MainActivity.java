@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete(String result) {
                 // result为探测结果，JSON格式。
-                CLSLog.d("hh-----------h", String.format("ping result: %s", result));
+                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
             }
         });
 

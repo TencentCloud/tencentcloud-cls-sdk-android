@@ -7,8 +7,8 @@
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-android-network-diagnosis-reporter', version: '1.0.4')
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-log-android-sdk', version: '1.0.4')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-android-network-diagnosis-reporter', version: '1.0.6')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-log-android-sdk', version: '1.0.6')
 ```
 
 接入Android应用的网络数据所涉及的依赖包说明如下表所示。
@@ -225,4 +225,61 @@ public void tcpPing(String domain, int port, int maxTimes, int timeout, Output o
         });
 ```
 
+### TraceRoute 网络探测
 
+
+方法1：
+
+```
+    /**
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param output 输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, Output output, Callback callback) {
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TRACEROUTE, result, callback);
+            }
+        }, output);
+        traceroute(traceroute);
+    }
+```
+
+方法2: 
+
+```
+    /**
+     *
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param maxHop
+     * @param countPerRoute
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, int maxHop, int countPerRoute, Output output, Callback callback) {
+        Traceroute.Config config =  new Traceroute.Config(domain);
+        config.setMaxHop(maxHop);
+        config.setCountPerRoute(countPerRoute);
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), callback, output);
+        traceroute(traceroute);
+    }
+```
+
+调用方法：
+
+```
+        CLSNetDiagnosis.getInstance().traceroute("www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
+            @Override
+            public void write(String line) {
+                System.out.println(line);
+            }
+        }, new CLSNetDiagnosis.Callback() {
+            @Override
+            public void onComplete(String result) {
+                // result为探测结果，JSON格式。
+                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
+            }
+        });
+```
