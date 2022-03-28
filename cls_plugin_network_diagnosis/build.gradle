@@ -1,0 +1,108 @@
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier.set("sources")
+    exclude "**/R.class"
+    exclude "**/BuildConfig.class"
+}
+//signing {
+//    sign publishing.publications
+//}
+
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId = 'com.tencentcloudapi.cls'
+                artifactId = 'cls-android-network-diagnosis-reporter'
+                version = '1.0.1'
+                from components.release
+                artifact sourcesJar
+
+                pom {
+                    name = artifactId
+                    description = "tencent cloud cls log sdk"
+                    url = 'https://github.com/TencentCloud/tencentcloud-cls-sdk-android'
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'farmerx'
+                            name = 'farmerx'
+                            email = 'farmerx@163.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git://github.com/TencentCloud/tencentcloud-cls-sdk-android.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/TencentCloud/tencentcloud-cls-sdk-android.git'
+                        url = 'https://github.com/TencentCloud/tencentcloud-cls-sdk-android/'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+//                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
+//                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                allowInsecureProtocol(true)
+//                credentials {
+//                    username = 'albertbi'
+//                    password = ''
+//                }
+//                authentication{
+//                    basic(BasicAuthentication)
+//                }
+            }
+        }
+    }
+}
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 31
+        versionCode 1
+        versionName "1.0.1"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation project(path: ':tencentcloud_cls_producer')
+    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.2'
+    implementation 'com.squareup.okio:okio:1.17.4'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+}

@@ -1,5 +1,3 @@
 <resources>
-    <string name="app_name">AndroidDemo</string>
-    <string name="edit_message">输入一条日志消息</string>
-    <string name="button_send">发送</string>
+    <string name="app_name">tencentcloud-cls-sdk-android</string>
 </resources>
