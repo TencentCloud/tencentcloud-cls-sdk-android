@@ -44,11 +44,6 @@ public class CLSNetDataSender implements ISender {
         // 超出限制立即返回
         producerConfig.setMaxBlockMs(0);
 
-//        final File rootPath = new File(new File(config.context.getFilesDir(), "cls_network_monitor"), "cls_logs");
-//        if (!rootPath.exists()) {
-//            rootPath.mkdirs();
-//        }
-
         producerClient = new AsyncProducerClient(producerConfig);
         if (config.debuggable) {
             CLSLog.v(TAG, "init success.");

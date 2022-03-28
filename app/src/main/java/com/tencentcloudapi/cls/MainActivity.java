@@ -58,10 +58,10 @@ public class MainActivity extends AppCompatActivity {
         CLSConfig config = new CLSConfig(context);
 
         config.endpoint = "ap-guangzhou.cls.tencentcs.com";
-        config.accessKeyId = "";
-        config.accessKeySecret = "";
+        config.accessKeyId = "xx";
+        config.accessKeySecret = "xx";
         config.pluginAppId = "666233";
-        config.topicId = "";
+        config.topicId = "xx";
         // 发布时，建议关闭，即配置为config.debuggable = false。
         config.debuggable = true;
         adapter.init(config);

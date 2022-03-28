@@ -20,7 +20,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'tencentcloud-log-android-sdk'
-                version = '1.0.6'
+                version = '1.0.1'
                 from components.release
                 artifact sourcesJar
 
@@ -51,17 +51,19 @@ afterEvaluate {
         }
         repositories {
             maven {
-                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
-                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
+                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+//                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
+//                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 allowInsecureProtocol(true)
-                credentials {
-                    username = 'albertbi'
-                    password = ''
-                }
-                authentication{
-                    basic(BasicAuthentication)
-                }
+//                credentials {
+//                    username = 'albertbi'
+//                    password = ''
+//                }
+//                authentication{
+//                    basic(BasicAuthentication)
+//                }
             }
         }
     }
