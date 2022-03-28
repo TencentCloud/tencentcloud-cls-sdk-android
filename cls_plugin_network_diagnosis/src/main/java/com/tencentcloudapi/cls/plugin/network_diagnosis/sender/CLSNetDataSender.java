@@ -41,12 +41,11 @@ public class CLSNetDataSender implements ISender {
 
         // 发送线程数，默认为1
         producerConfig.setSendThreadCount(1);
-        producerConfig.setRetries(0);
 
-        final File rootPath = new File(new File(config.context.getFilesDir(), "cls_network_monitor"), "cls_logs");
-        if (!rootPath.exists()) {
-            rootPath.mkdirs();
-        }
+//        final File rootPath = new File(new File(config.context.getFilesDir(), "cls_network_monitor"), "cls_logs");
+//        if (!rootPath.exists()) {
+//            rootPath.mkdirs();
+//        }
 
         producerClient = new AsyncProducerClient(producerConfig);
         if (config.debuggable) {
