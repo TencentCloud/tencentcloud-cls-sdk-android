@@ -1,14 +1,12 @@
 package com.tencentcloudapi.cls.android.producer.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.tencentcloudapi.cls.android.CLSLog;
 
 /**
  * @author farmerx
  */
 public class LogThread extends Thread {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static LogThread daemon(final String name, Runnable runnable) {
         return new LogThread(name, runnable, true);
@@ -32,7 +30,7 @@ public class LogThread extends Thread {
         setDaemon(daemon);
         setUncaughtExceptionHandler( new UncaughtExceptionHandler() {
             public void uncaughtException(Thread t, Throwable e) {
-                LOGGER.error("Uncaught error in thread, name={}, e=", name, e);
+                CLSLog.e("producer", CLSLog.format("Uncaught error in thread, name=%s, e=%s", name, e.getMessage()));
             }
         });
     }

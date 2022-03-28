@@ -1,6 +1,7 @@
 package com.tencentcloudapi.cls.android.producer.common;
 
 import com.google.common.math.LongMath;
+import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.producer.AsyncProducerConfig;
 import com.tencentcloudapi.cls.android.producer.http.client.Sender;
 import com.tencentcloudapi.cls.android.producer.http.comm.HttpMethod;
@@ -9,8 +10,6 @@ import com.tencentcloudapi.cls.android.producer.request.PutLogsRequest;
 import com.tencentcloudapi.cls.android.producer.response.PutLogsResponse;
 import com.tencentcloudapi.cls.android.producer.util.LZ4Encoder;
 import com.tencentcloudapi.cls.android.producer.util.QcloudClsSignature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,8 +18,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SendProducerBatchTask implements Runnable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SendProducerBatchTask.class);
 
     private final ProducerBatch batch;
 
@@ -54,11 +51,11 @@ public class SendProducerBatchTask implements Runnable {
         try {
             sendProducerBatch(System.currentTimeMillis());
         } catch (Throwable t) {
-            LOGGER.error(
-                    "Uncaught error in send producer batch task, topic_id="
+
+            CLSLog.e("producer", CLSLog.format("Uncaught error in send producer batch task, topic_id="
                             + batch.getTopicId()
-                            + ", e=",
-                    t);
+                            + ", e=%s",
+                    t.getMessage()));
         }
     }
 
