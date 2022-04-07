@@ -10,9 +10,9 @@ task sourcesJar(type: Jar) {
     exclude "**/R.class"
     exclude "**/BuildConfig.class"
 }
-//signing {
-//    sign publishing.publications
-//}
+signing {
+    sign publishing.publications
+}
 
 afterEvaluate {
     publishing {
