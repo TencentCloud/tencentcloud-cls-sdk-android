@@ -20,7 +20,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
-                artifactId = 'cls-android-network-diagnosis-reporter'
+                artifactId = 'cls-network-diagnosis-reporter-android'
                 version = '1.0.1'
                 from components.release
                 artifact sourcesJar

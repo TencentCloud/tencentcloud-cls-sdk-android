@@ -19,7 +19,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
-                artifactId = 'tencentcloud-log-android-sdk'
+                artifactId = 'tencentcloud-cls-sdk-android'
                 version = '1.0.1'
                 from components.release
                 artifact sourcesJar
