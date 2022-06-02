@@ -298,7 +298,7 @@ public static void main(String[] args) {
         // 日志主题ID，必填
         String topicId = "";
 
-        final AsyncProducerConfig config = new AsyncProducerConfig(endpoint, secretId, secretKey, NetworkUtils.getLocalMachineIP());
+        final AsyncProducerConfig config = new AsyncProducerConfig(endpoint, secretId, secretKey, "", NetworkUtils.getLocalMachineIP());
 
         // 构建一个客户端实例
         final AsyncProducerClient client = new AsyncProducerClient(config);
