@@ -319,3 +319,6 @@ public static void main(String[] args) {
    
 ```
 
+### 检索接口相关文档
+
+https://cloud.tencent.com/document/product/614/16875
