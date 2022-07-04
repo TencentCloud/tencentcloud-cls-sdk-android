@@ -67,6 +67,9 @@ public class SendProducerBatchTask implements Runnable {
         return headParameter;
     }
 
+
+
+
     /**
      * buildPutLogsRequest
      * @param batch ProducerBatch

@@ -7,7 +7,7 @@ import android.util.Log;
  * @date 2022/03/10
  */
 public final class CLSLog {
-    private static final String TAG = "SLSAndroid";
+    private static final String TAG = "CLSAndroid";
 
     public static void v(String module, Object msg) {
         Log.v(TAG, format(module, msg));

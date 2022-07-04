@@ -92,6 +92,7 @@ public class AsyncProducerConfig {
         }
     }
 
+
     /**
      * 获取Http Type
      * @return

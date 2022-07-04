@@ -74,4 +74,16 @@ public final class Utils {
     public static String generatePackageId(String producerHash, AtomicLong batchId) {
         return  (producerHash + "-" + Long.toHexString(batchId.getAndIncrement())).toUpperCase();
     }
+
+    public static void assertParameterNotNull(Object param, String paramName) {
+        if (param == null) {
+            throw new NullPointerException(paramName + " is null");
+        }
+    }
+    public static void assertStringNotNullOrEmpty(String param, String paramName) {
+        assertParameterNotNull(param, paramName);
+        if (param.isEmpty()) {
+            throw new IllegalArgumentException(paramName + " is empty");
+        }
+    }
 }

@@ -36,6 +36,7 @@ public class Constants {
 
     public static final String CONST_CONTENT_TYPE = "Content-Type";
     public static final String CONST_PROTO_BUF = "application/x-protobuf";
+    public static final String CONST_JSON = "application/json";
     public static final String CONST_CONTENT_LENGTH = "Content-Length";
     public static final String CONST_AUTHORIZATION = "Authorization";
     public static final String CONST_GZIP_ENCODING = "deflate";
@@ -48,6 +49,7 @@ public class Constants {
     public static int HTTP_SEND_TIME_OUT = 60 * 1000;
     public static final String TOPIC_ID = "topic_id";
     public static final String UPLOAD_LOG_RESOURCE_URI = "/structuredlog";
+    public static final String SEARCH_LOG_RESOURCE_URI = "/searchlog";
     public static final int DEFAULT_TOTAL_SIZE_IN_BYTES = 100 * 1024 * 1024;
     public static final long DEFAULT_MAX_BLOCK_MS = 60 * 1000L;
     public static final int DEFAULT_SEND_THREAD_COUNT =
@@ -71,4 +73,12 @@ public class Constants {
     public static final String SUCCESS_BATCH_HANDLER_SUFFIX = "-success-batch-handler";
     public static final String FAILURE_BATCH_HANDLER_SUFFIX = "-failure-batch-handler";
 
+    public static final String CONST_TOPIC_IDS = "topic_ids";
+    public static final String CONST_START_TIME = "start_time";
+    public static final String CONST_END_TIME = "end_time";
+    public static final String CONST_QUERY_STRING = "query_string";
+    public static final String CONST_LIMIT = "limit";
+    public static final String CONST_CONTEXT = "context";
+    public static final String CONST_LOGSET_ID = "logset_id";
+    public static final String CONST_SORT = "sort";
 }

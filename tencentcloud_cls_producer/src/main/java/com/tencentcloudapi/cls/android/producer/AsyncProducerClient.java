@@ -7,6 +7,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.tencentcloudapi.cls.android.producer.common.*;
 import com.tencentcloudapi.cls.android.producer.errors.MaxBatchCountExceedException;
 import com.tencentcloudapi.cls.android.producer.errors.ProducerException;
+import com.tencentcloudapi.cls.android.producer.request.SearchLogRequest;
+import com.tencentcloudapi.cls.android.producer.response.SearchLogResponse;
 import com.tencentcloudapi.cls.android.producer.util.Utils;
 
 
@@ -152,6 +154,29 @@ public class AsyncProducerClient {
         }
         return accumulator.append(topicId, logItems, callback);
     }
+
+
+    public SearchLogResponse SearchLog(SearchLogRequest request) throws LogException {
+        Utils.assertStringNotNullOrEmpty(request.GetLogSet(), "logset_id");
+        Utils.assertStringNotNullOrEmpty(request.GetTopic(), "topic_ids");
+        Utils.assertStringNotNullOrEmpty(request.GetStartTime(), "start_time");
+        Utils.assertStringNotNullOrEmpty(request.GetEndTime(), "end_time");
+        Utils.assertParameterNotNull(request.GetQuery(), "query_string");
+        if (request.GetLimit()>100 && request.GetLimit()<=0) {
+            throw new IllegalArgumentException("limit is illegal");
+        }
+
+        if (null == request.GetSort() || request.GetSort().isEmpty()) {
+            request.SetSort("desc");
+        }
+
+        if (request.GetSort()!= "asc" && request.GetSort()!= "desc") {
+            throw new IllegalArgumentException("sort is illegal");
+        }
+
+        return LogSearch.searchLogs(this.producerConfig,  request);
+    }
+
 
     public void close() throws InterruptedException, ProducerException {
         close(Long.MAX_VALUE);
