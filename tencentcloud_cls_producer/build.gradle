@@ -20,7 +20,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'tencentcloud-cls-sdk-android'
-                version = '1.0.1'
+                version = '1.0.2'
                 from components.release
                 artifact sourcesJar
 
@@ -78,7 +78,7 @@ android {
         minSdk 21
         targetSdk 31
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
