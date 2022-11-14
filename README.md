@@ -49,6 +49,14 @@
 />
 ```
 
+
+### 混淆异常
+lz4 压缩算法混淆异常，需要skip掉
+
+```
+ -keep class net.jpountz.lz4.** { *; } 
+```
+
 ### 配置接入服务
 
 * 添加Application类，即在$PROJECT/app/src/main/AndroidManifest.xml文件中增加Application类。
