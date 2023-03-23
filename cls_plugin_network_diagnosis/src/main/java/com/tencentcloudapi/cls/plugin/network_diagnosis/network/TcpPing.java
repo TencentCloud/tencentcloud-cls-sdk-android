@@ -208,7 +208,7 @@ public final class TcpPing implements Task {
             JSONObject o = new JSONObject();
             try {
                 o.put("method", this.method);
-                o.put("host_ip", this.ip);
+                o.put("ip", this.ip);
                 o.put("host", this.host);
                 o.put("port", this.port);
                 o.put("max", String.format("%.2f", this.maxTime));

@@ -46,7 +46,14 @@ public class Traceroute implements CommandPerformer {
         } catch (UnknownHostException e) {
             CLSLog.e(TAG, String.format("traceroute parse %s occur error:%s ", config.targetHost, e.getMessage()));
             if (callback != null) {
-                callback.onComplete("");
+                long timestamp = System.currentTimeMillis() / 1000;
+                TracerouteResult result = new TracerouteResult(
+                        "",
+                        timestamp,
+                        CommandStatus.CMD_STATUS_ERROR_UNKNOW_HOST,
+                        config.getTargetHost()
+                );
+                callback.onComplete(result.toJson().toString());
             }
             return;
         }
