@@ -106,7 +106,7 @@ public class SendProducerBatchTask implements Runnable {
         if (!producerConfig.getSecretToken().isEmpty()) {
             headParameter.put("X-Cls-Token", producerConfig.getSecretToken());
         }
-        headParameter.put("android-sdk-version", "1.0.5");
+        headParameter.put("User-Agent", "cls-android-sdk-1.0.3");
         URI uri = getHostURI();
         byte[] compressedData = LZ4Encoder.compressToLhLz4Chunk(body);
         RequestMessage requestMessage = buildRequest(uri, urlParameter, headParameter, compressedData, compressedData.length);
