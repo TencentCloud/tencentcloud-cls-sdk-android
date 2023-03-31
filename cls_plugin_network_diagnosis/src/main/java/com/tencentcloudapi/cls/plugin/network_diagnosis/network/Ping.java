@@ -257,7 +257,7 @@ public final class Ping implements Task {
                 o.put("min", String.format("%.2f", this.min));
                 o.put("avg", String.format("%.2f", this.avg));
                 o.put("stddev", String.format("%.2f", this.stddev));
-                o.put("loss", this.dropped);
+                o.put("loss", Math.round(this.dropped / this.count * 100));
                 o.put("count", this.count);
                 o.put("size", this.size);
                 o.put("responseNum", this.sent);
