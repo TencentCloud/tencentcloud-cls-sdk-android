@@ -102,6 +102,7 @@ public class SendProducerBatchTask implements Runnable {
         }
         headParameter.put(Constants.CONST_AUTHORIZATION, signature);
         headParameter.put("x-cls-compress-type", "lz4");
+        headParameter.put("x-cls-add-source", "1");
 
         if (!producerConfig.getSecretToken().isEmpty()) {
             headParameter.put("X-Cls-Token", producerConfig.getSecretToken());
