@@ -111,22 +111,22 @@ public class TracerouteNodeResult extends NetCommandResult {
     @Override
     public JSONObject toJson() {
         JSONObject json = super.toJson();
-        JSONArray jarr = new JSONArray();
-        if (singleNodeList != null && !singleNodeList.isEmpty()) {
-            for (SingleNodeResult result : singleNodeList) {
-                if (result == null || result.toJson().length() == 0)
-                    continue;
-
-                jarr.put(result.toJson());
-            }
-        }
+//        JSONArray jarr = new JSONArray();
+//        if (singleNodeList != null && !singleNodeList.isEmpty()) {
+//            for (SingleNodeResult result : singleNodeList) {
+//                if (result == null || result.toJson().length() == 0)
+//                    continue;
+//
+//                jarr.put(result.toJson());
+//            }
+//        }
         try {
             json.put("hop", hop);
             json.put("route_ip", routeIp);
             json.put("avg_delay", averageDelay());
             json.put("loss", lossRate());
             json.put("is_final_route", isFinalRoute);
-            json.put("single_node_list", jarr);
+//            json.put("single_node_list", jarr);
         } catch (JSONException e) {
             e.printStackTrace();
         }

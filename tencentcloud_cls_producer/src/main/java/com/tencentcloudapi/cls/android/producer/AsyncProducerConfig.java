@@ -82,9 +82,9 @@ public class AsyncProducerConfig {
         this.secretKey = secretKey;
         this.sourceIp = sourceIp;
         this.context = context;
-        if (null == sourceIp  || sourceIp.isEmpty()) {
-            this.sourceIp = NetworkUtils.getLocalMachineIP();
-        }
+//        if (null == sourceIp  || sourceIp.isEmpty()) {
+//            this.sourceIp = NetworkUtils.getLocalMachineIP();
+//        }
 
         this.secretToken = secretToken;
         if (null == this.secretToken || this.secretToken.isEmpty()) {

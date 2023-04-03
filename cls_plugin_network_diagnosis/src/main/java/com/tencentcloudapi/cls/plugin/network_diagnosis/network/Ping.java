@@ -251,13 +251,13 @@ public final class Ping implements Task {
             JSONObject o = new JSONObject();
             try {
                 o.put("method", "ping");
-                o.put("host_ip", this.ip);
+                o.put("ip", this.ip);
                 o.put("host", this.host);
                 o.put("max", String.format("%.2f", this.max));
                 o.put("min", String.format("%.2f", this.min));
                 o.put("avg", String.format("%.2f", this.avg));
                 o.put("stddev", String.format("%.2f", this.stddev));
-                o.put("loss", this.dropped);
+                o.put("loss", Math.round(this.dropped / this.count * 100));
                 o.put("count", this.count);
                 o.put("size", this.size);
                 o.put("responseNum", this.sent);

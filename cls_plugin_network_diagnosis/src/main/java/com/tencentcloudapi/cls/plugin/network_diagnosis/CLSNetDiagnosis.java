@@ -106,23 +106,20 @@ public class CLSNetDiagnosis {
         if (!TextUtils.isEmpty(scheme.app_id) && scheme.app_id.contains("@")) {
             scheme.app_id = scheme.app_id.substring(0, scheme.app_id.indexOf("@"));
         }
-        scheme.reserve6 = result;
-
-        JSONObject reserves = new JSONObject();
+        scheme.result = result;
         if (type == Type.PING) {
-            JsonUtil.putOpt(reserves, "method", "PING");
+            scheme.method = "PING";
         } else if (type == Type.TCPPING) {
-            JsonUtil.putOpt(reserves, "method", "TCPPING");
+            scheme.method = "TCPPING";
         } else if (type == Type.MTR) {
-            JsonUtil.putOpt(reserves, "method", "MTR");
+            scheme.method = "MTR";
         } else if (type == Type.HTTP) {
-            JsonUtil.putOpt(reserves, "method", "HTTP");
+            scheme.method = "HTTP";
         } else if (type == Type.TRACEROUTE) {
-            JsonUtil.putOpt(reserves, "method", "TRACEROUTE");
+            scheme.method = "TRACEROUTE";
         }else {
-            JsonUtil.putOpt(reserves, "method", "UNKNOWN");
+            scheme.method = "UNKNOWN";
         }
-        scheme.reserves = reserves.toString();
         sender.send(scheme);
 
         if (null != callback) {

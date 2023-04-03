@@ -49,13 +49,8 @@ public class Scheme {
     public String network_type;
     public String school;
     public String root;
-    public String reserve1;
-    public String reserve2;
-    public String reserve3;
-    public String reserve4;
-    public String reserve5;
-    public String reserve6;
-    public String reserves;
+    public String result;
+    public String method;
     public String local_time;
     public String local_timestamp;
     public String local_time_fixed;
@@ -113,13 +108,8 @@ public class Scheme {
         putIfNotNull(fields, "network_type", network_type);
         putIfNotNull(fields, "school", school);
         putIfNotNull(fields, "root", root);
-        putIfNotNull(fields, "reserve1", reserve1);
-        putIfNotNull(fields, "reserve2", reserve2);
-        putIfNotNull(fields, "reserve3", reserve3);
-        putIfNotNull(fields, "reserve4", reserve4);
-        putIfNotNull(fields, "reserve5", reserve5);
-        putIfNotNull(fields, "reserve6", reserve6);
-        putIfNotNull(fields, "reserves", reserves);
+        putIfNotNull(fields, "result", result);
+        putIfNotNull(fields, "method", method);
         putIfNotNull(fields, "local_time", local_time);
         putIfNotNull(fields, "local_timestamp", local_timestamp);
         putIfNotNull(fields, "local_time_fixed", local_time_fixed);
@@ -195,17 +185,17 @@ public class Scheme {
         scheme.app_name = returnDashIfNull(AppUtils.getAppName(context));
         scheme.app_version = returnDashIfNull(AppUtils.getAppVersion(context));
         scheme.utdid = returnDashIfNull(DeviceUtils.getUtdid(context));
-        scheme.imei = returnDashIfNull(DeviceUtils.getImei(context));
-        scheme.imsi = returnDashIfNull(DeviceUtils.getImsi(context));
+//        scheme.imei = returnDashIfNull(DeviceUtils.getImei(context));
+//        scheme.imsi = returnDashIfNull(DeviceUtils.getImsi(context));
         scheme.brand = returnDashIfNull(Build.BRAND);
-        scheme.device_model = returnDashIfNull(Build.MODEL);
+//        scheme.device_model = returnDashIfNull(Build.MODEL);
         scheme.os = "Android";
         scheme.os_version = returnDashIfNull(VERSION.RELEASE);
         scheme.carrier = returnDashIfNull(DeviceUtils.getCarrier(context));
         scheme.access = returnDashIfNull(DeviceUtils.getAccessName(context));
         scheme.access_subtype = returnDashIfNull(DeviceUtils.getAccessSubTypeName(context));
         scheme.root = returnDashIfNull(RootUtil.isDeviceRooted() + "");
-        scheme.resolution = returnDashIfNull(DeviceUtils.getResolution(context));
+//        scheme.resolution = returnDashIfNull(DeviceUtils.getResolution(context));
 
         return scheme;
     }

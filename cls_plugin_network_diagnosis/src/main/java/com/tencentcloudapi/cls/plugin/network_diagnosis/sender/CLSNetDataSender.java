@@ -36,7 +36,7 @@ public class CLSNetDataSender implements ISender {
                     , config.accessKeyId
                     , config.accessKeySecret
                     , config.securityToken
-                    , NetworkUtils.getLocalMachineIP()
+                    , ""
         );
 
         // 发送线程数，默认为1

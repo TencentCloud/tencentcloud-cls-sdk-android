@@ -59,7 +59,7 @@ public class TracerouteResult implements JsonSerializable {
             }
         }
         try {
-            json.put("host", targetIp);
+            json.put("host", host);
             json.put("host_ip", targetIp);
             json.put("timestamp", timestamp);
             json.put("command_status", status.getName().toString());
