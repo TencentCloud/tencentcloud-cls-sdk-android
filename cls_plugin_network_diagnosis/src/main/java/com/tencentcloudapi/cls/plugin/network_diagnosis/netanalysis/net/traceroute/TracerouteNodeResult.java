@@ -89,9 +89,9 @@ public class TracerouteNodeResult extends NetCommandResult {
         return Math.round(total / count);
     }
 
-    public int lossRate() {
+    public String lossRate() {
         if (singleNodeList == null || singleNodeList.isEmpty())
-            return 100;
+            return "1";
 
         int loss = 0;
         float total = singleNodeList.size();
@@ -99,8 +99,7 @@ public class TracerouteNodeResult extends NetCommandResult {
             if (node == null || node.getStatus() != CommandStatus.CMD_STATUS_SUCCESSFUL || node.delay == 0.f)
                 loss++;
         }
-
-        return Math.round(loss / total * 100);
+        return String.format("%.2f", Float.valueOf(loss) / Float.valueOf(total));
     }
 
     @Override

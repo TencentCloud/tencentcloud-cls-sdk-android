@@ -216,7 +216,12 @@ public final class TcpPing implements Task {
                 o.put("avg", String.format("%.2f", this.avgTime));
                 o.put("stddev", this.stddevTime);
                 o.putOpt("sum", String.format("%.2f", this.sumTime));
-                o.put("loss",   Math.round(this.dropped / this.count * 100));
+
+                if (0 == this.count) {
+                    o.put("loss", 1);
+                } else {
+                    o.put("loss",  String.format("%.2f", Float.valueOf(this.dropped) / Float.valueOf(this.count)));
+                }
                 o.put("count", this.count);
                 o.put("timestamp",  System.currentTimeMillis() / 1000);
                 o.put("responseNum", this.count-this.dropped);
