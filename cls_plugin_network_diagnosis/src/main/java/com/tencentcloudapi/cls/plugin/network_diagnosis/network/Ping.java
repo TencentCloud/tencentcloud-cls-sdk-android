@@ -258,7 +258,7 @@ public final class Ping implements Task {
                 o.put("avg", String.format("%.2f", this.avg));
                 o.put("stddev", String.format("%.2f", this.stddev));
                 if (0 == this.count) {
-                    o.put("loss", 1);
+                    o.put("loss", "1");
                 } else {
                     o.put("loss", String.format("%.2f", Float.valueOf(this.dropped) / Float.valueOf(this.count)));
                 }

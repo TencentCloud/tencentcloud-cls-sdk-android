@@ -218,7 +218,7 @@ public final class TcpPing implements Task {
                 o.putOpt("sum", String.format("%.2f", this.sumTime));
 
                 if (0 == this.count) {
-                    o.put("loss", 1);
+                    o.put("loss", "1");
                 } else {
                     o.put("loss",  String.format("%.2f", Float.valueOf(this.dropped) / Float.valueOf(this.count)));
                 }
