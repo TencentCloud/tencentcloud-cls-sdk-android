@@ -115,10 +115,10 @@ public final class HttpPing implements Task {
             try {
                 o.put("method", "http");
                 o.put("url", this.url);
-                o.put("duration", this.duration);
-                o.put("code", this.code);
-                o.put("content-length", this.contentLength);
-                o.put("error_message", this.errorMessage);
+                o.put("requestTime", this.duration);
+                o.put("httpCode", this.code);
+                o.put("contentLength", this.contentLength);
+                o.put("errorMessage", this.errorMessage);
                 JSONObject newHeaders = new JSONObject();
                 if (null != this.headers) {
                     for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
