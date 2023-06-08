@@ -163,6 +163,20 @@ public class CLSNetDiagnosis {
     }
 
     /**
+     * @param url   目标 host，如：cloud.tencent.com
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void httpPing(String url, Output output, Callback callback) {
+        Diagnosis.httpPing(url, output, new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.HTTP, result, callback);
+            }
+        });
+    }
+
+    /**
      * @param domain   目标 host，如：cloud.tencent.com
      * @param port     目标端口，如：80
      * @param maxTimes 探测的次数

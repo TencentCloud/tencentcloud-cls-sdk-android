@@ -59,6 +59,14 @@ public class Diagnosis {
         TcpPing.start(domain, port, maxTimes, timeout, output, callback);
     }
 
+    /**
+     * @param url   目标 url
+     * @param callback 回调 callback
+     */
+    public static void httpPing(String url, CLSNetDiagnosis.Output output, CLSNetDiagnosis.Callback callback) {
+        HttpPing.start(url, output, callback);
+    }
+
     private static String getDeviceId() {
         if (deviceId == null || deviceId.equalsIgnoreCase("")) {
             deviceId = UUID.randomUUID().toString().replace("-", "");
