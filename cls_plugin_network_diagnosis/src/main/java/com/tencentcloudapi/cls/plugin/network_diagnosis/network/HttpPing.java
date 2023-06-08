@@ -14,7 +14,7 @@ import java.util.Map;
 
 public final class HttpPing implements Task {
     private volatile boolean stopped;
-    private static final int MAX = 64 * 1024;
+    private static final int MAX = 1024 * 1024;
 
     private final String url;
     private final CLSNetDiagnosis.Output output;
@@ -49,6 +49,7 @@ public final class HttpPing implements Task {
             httpConn.setReadTimeout(20000);
             int responseCode = httpConn.getResponseCode();
             output.write("status " + responseCode);
+
 
             Map<String, List<String>> headers = httpConn.getHeaderFields();
             for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
@@ -114,12 +115,28 @@ public final class HttpPing implements Task {
             try {
                 o.put("method", "http");
                 o.put("url", this.url);
-                o.put("headers", this.headers);
                 o.put("duration", this.duration);
                 o.put("code", this.code);
-                o.put("body", this.body);
-                o.put("contentLength", this.contentLength);
+                o.put("content-length", this.contentLength);
                 o.put("error_message", this.errorMessage);
+                JSONObject newHeaders = new JSONObject();
+                if (null != this.headers) {
+                    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                        if (null==entry.getKey() || entry.getKey().isEmpty()) {
+                            newHeaders.put("-" ,entry.getValue().get(0));
+                        } else {
+                            newHeaders.put(entry.getKey() ,entry.getValue().get(0));
+                        }
+                    }
+                    o.put("headers", newHeaders);
+                } else {
+                    o.put("headers", "");
+                }
+                if (null == this.body) {
+                    o.put("body", "");
+                } else {
+                    o.put("body", new String(this.body));
+                }
                 return o.toString();
             } catch (JSONException err) {
                 err.printStackTrace();
