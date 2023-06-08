@@ -19,7 +19,8 @@ public static void main(String[] args) {
         String secretKey = "";
         // 日志主题ID，必填
         String topicId = "";
-
+         
+        // NetworkUtils.getLocalMachineIP() 获取本地网卡ip，如果不指定，默认填充服务端接收到的网络出口ip
         final AsyncProducerConfig config = new AsyncProducerConfig(endpoint, secretId, secretKey, "", NetworkUtils.getLocalMachineIP());
 
         // 构建一个客户端实例
