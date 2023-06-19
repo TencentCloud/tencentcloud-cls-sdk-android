@@ -63,14 +63,14 @@ public final class HttpPing implements Task {
             output.write("Done, duration " + duration + "ms");
             is.close();
             if (read <= 0) {
-                Result r = new Result(url,responseCode, headers, null, (int) duration, "", httpConn.getContentLength());
+                Result r = new Result(url,responseCode, headers, null, (int) duration, "ok", httpConn.getContentLength());
                 complete.onComplete(r.encode());
                 return;
             }
             if (read <=data.length) {
                 byte[] b = new byte[read];
                 System.arraycopy(data, 0, b, 0, read);
-                Result r = new Result(url, responseCode, headers, b, (int) duration, "", httpConn.getContentLength());
+                Result r = new Result(url, responseCode, headers, b, (int) duration, "ok", httpConn.getContentLength());
                 complete.onComplete(r.encode());
             }
         } catch (IOException e) {
