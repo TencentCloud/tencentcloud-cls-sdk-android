@@ -50,7 +50,6 @@ public final class HttpPing implements Task {
             int responseCode = httpConn.getResponseCode();
             output.write("status " + responseCode);
 
-
             Map<String, List<String>> headers = httpConn.getHeaderFields();
             for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
                 output.write(entry.getKey() + ":" + entry.getValue().get(0));
@@ -68,7 +67,7 @@ public final class HttpPing implements Task {
                 complete.onComplete(r.encode());
                 return;
             }
-            if (read < data.length) {
+            if (read <=data.length) {
                 byte[] b = new byte[read];
                 System.arraycopy(data, 0, b, 0, read);
                 Result r = new Result(url, responseCode, headers, b, (int) duration, "", httpConn.getContentLength());
@@ -132,11 +131,11 @@ public final class HttpPing implements Task {
                 } else {
                     o.put("headers", "");
                 }
-                if (null == this.body) {
-                    o.put("body", "");
-                } else {
-                    o.put("body", new String(this.body));
-                }
+//                if (null == this.body) {
+//                    o.put("body", "");
+//                } else {
+//                    o.put("body", new String(this.body));
+//                }
                 return o.toString();
             } catch (JSONException err) {
                 err.printStackTrace();
