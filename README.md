@@ -5,7 +5,7 @@
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.4')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.5')
 ```
 
 ## 日志上传Demo
@@ -65,8 +65,8 @@ public static void main(String[] args) {
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '1.0.4')
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.4')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '1.0.5')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.5')
 ```
 
 接入Android应用的网络数据所涉及的依赖包说明如下表所示。
@@ -350,5 +350,21 @@ public void tcpPing(String domain, int port, int maxTimes, int timeout, Output o
         });
 ```
 
+### HttpPing网络探测
+
+```
+CLSNetDiagnosis.getInstance().httpPing("https://www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
+            @Override
+            public void write(String line) {
+                System.out.println(line);
+            }
+        }, new CLSNetDiagnosis.Callback() {
+            @Override
+            public void onComplete(String result) {
+                // result为探测结果，JSON格式。
+                CLSLog.d("HttpPing", String.format("traceRoute result: %s", result));
+            }
+        });
+```
 
 
