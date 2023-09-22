@@ -57,14 +57,14 @@ afterEvaluate {
 //                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
 //                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-//                allowInsecureProtocol(true)
-//                credentials {
-//                    username = "$mavenUser"
-//                    password = "$mavenPassword"
-//                }
-//                authentication{
-//                    basic(BasicAuthentication)
-//                }
+                allowInsecureProtocol(true)
+                credentials {
+g                    username = "$mavenUser"
+                    password = "$mavenPassword"
+                }
+                authentication{
+                    basic(BasicAuthentication)
+                }
             }
         }
     }
