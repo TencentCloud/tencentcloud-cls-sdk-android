@@ -21,7 +21,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'cls-network-diagnosis-reporter-android'
-                version = '1.0.5'
+                version = '1.0.6'
                 from components.release
                 artifact sourcesJar
 
@@ -57,14 +57,14 @@ afterEvaluate {
 //                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
 //                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                allowInsecureProtocol(true)
-                credentials {
-                    username = "$mavenUser"
-                    password = "$mavenPassword"
-                }
-                authentication{
-                    basic(BasicAuthentication)
-                }
+//                allowInsecureProtocol(true)
+//                credentials {
+//                    username = "$mavenUser"
+//                    password = "$mavenPassword"
+//                }
+//                authentication{
+//                    basic(BasicAuthentication)
+//                }
             }
         }
     }
@@ -77,7 +77,7 @@ android {
         minSdk 19
         targetSdk 31
         versionCode 1
-        versionName "1.0.5"
+        versionName "1.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -98,8 +98,8 @@ android {
 dependencies {
     implementation project(path: ':tencentcloud_cls_producer')
     implementation 'com.google.guava:guava:27.0.1-android'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.5.0'
+//    implementation 'androidx.appcompat:appcompat:1.4.1'
+//    implementation 'com.google.android.material:material:1.5.0'
     implementation 'com.squareup.okhttp3:okhttp:3.14.2'
     implementation 'com.squareup.okio:okio:1.17.4'
     testImplementation 'junit:junit:4.+'

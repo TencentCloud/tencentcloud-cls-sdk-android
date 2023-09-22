@@ -3,7 +3,7 @@ package com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.net.tracero
 import android.os.SystemClock;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosis;
@@ -115,7 +115,7 @@ public class Traceroute implements CommandPerformer {
         private int maxHop;
         private int countPerRoute;
 
-        public Config(@NonNull String targetHost) {
+        public Config(String targetHost) {
             this.targetHost = targetHost;
             this.maxHop = 32;
             this.countPerRoute = 3;
@@ -134,7 +134,7 @@ public class Traceroute implements CommandPerformer {
             return targetHost;
         }
 
-        public Config setTargetHost(@NonNull String targetHost) {
+        public Config setTargetHost(String targetHost) {
             this.targetHost = targetHost;
             return this;
         }
