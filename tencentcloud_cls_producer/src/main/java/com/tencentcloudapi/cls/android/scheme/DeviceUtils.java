@@ -14,6 +14,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import com.tencentcloudapi.cls.android.CLSLog;
@@ -149,7 +150,7 @@ class DeviceUtils {
             case TelephonyManager.NETWORK_TYPE_CDMA:
             case TelephonyManager.NETWORK_TYPE_1xRTT:
             case TelephonyManager.NETWORK_TYPE_IDEN:
-            case TelephonyManager.NETWORK_TYPE_GSM:
+//            case TelephonyManager.NETWORK_TYPE_GSM:
                 return "2G";
             case TelephonyManager.NETWORK_TYPE_UMTS:
             case TelephonyManager.NETWORK_TYPE_EVDO_0:
@@ -160,13 +161,13 @@ class DeviceUtils {
             case TelephonyManager.NETWORK_TYPE_EVDO_B:
             case TelephonyManager.NETWORK_TYPE_EHRPD:
             case TelephonyManager.NETWORK_TYPE_HSPAP:
-            case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
+//            case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
                 return "3G";
             case TelephonyManager.NETWORK_TYPE_LTE:
-            case TelephonyManager.NETWORK_TYPE_IWLAN:
+//            case TelephonyManager.NETWORK_TYPE_IWLAN:
                 return "4G";
-            case TelephonyManager.NETWORK_TYPE_NR:
-                return "5G";
+//            case TelephonyManager.NETWORK_TYPE_NR:
+//                return "5G";
             default:
                 return "Unknown";
         }

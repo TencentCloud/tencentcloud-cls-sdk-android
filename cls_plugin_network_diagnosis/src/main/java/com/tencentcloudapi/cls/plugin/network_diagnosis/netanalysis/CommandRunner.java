@@ -1,6 +1,6 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis;
 
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 
 import com.tencentcloudapi.cls.android.CLSLog;
 
@@ -17,7 +17,7 @@ public class CommandRunner extends Thread {
         this("CLS-netsdk-threadpool");
     }
 
-    public CommandRunner(@NonNull String name) {
+    public CommandRunner(String name) {
         super(name);
         this.cmdQueue = new LinkedBlockingQueue<>();
     }

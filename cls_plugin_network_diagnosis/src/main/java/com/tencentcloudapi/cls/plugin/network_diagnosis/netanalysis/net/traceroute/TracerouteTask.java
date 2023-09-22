@@ -3,7 +3,7 @@ package com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.net.tracero
 import android.os.SystemClock;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosis;
@@ -23,15 +23,15 @@ final class TracerouteTask extends NetCommandTask<TracerouteNodeResult> {
 
     private CLSNetDiagnosis.Output output;
 
-    TracerouteTask(@NonNull InetAddress targetAddress, int hop) {
+    TracerouteTask(InetAddress targetAddress, int hop) {
         this(targetAddress, hop, 3, null);
     }
 
-    TracerouteTask(@NonNull InetAddress targetAddress, int hop, CLSNetDiagnosis.Output output) {
+    TracerouteTask(InetAddress targetAddress, int hop, CLSNetDiagnosis.Output output) {
         this(targetAddress, hop, 3, output);
     }
 
-    TracerouteTask(@NonNull InetAddress targetAddress, int hop, int count, CLSNetDiagnosis.Output output) {
+    TracerouteTask(InetAddress targetAddress, int hop, int count, CLSNetDiagnosis.Output output) {
         this.targetAddress = targetAddress;
         this.hop = hop;
         this.count = count;
