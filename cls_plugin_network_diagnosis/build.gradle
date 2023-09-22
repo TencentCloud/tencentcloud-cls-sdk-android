@@ -59,7 +59,7 @@ afterEvaluate {
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 allowInsecureProtocol(true)
                 credentials {
-g                    username = "$mavenUser"
+                    username = "$mavenUser"
                     password = "$mavenPassword"
                 }
                 authentication{
