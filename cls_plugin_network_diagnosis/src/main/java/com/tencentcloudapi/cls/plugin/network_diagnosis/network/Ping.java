@@ -95,19 +95,35 @@ public final class Ping implements Task {
         try {
             // 超时应该在3钞以上
             int timeOut = 3000;
-            // 当返回值是true时，说明host是可用的，false则不可。
-            boolean status = InetAddress.getByName(address).isReachable(timeOut);
-            if (!status) {
+            // 当返回值是true时，说明host是可用的，false则不可
+            Boolean status = InetAddress.getByName(address).isReachable(timeOut);
+            if (null == status && false == status) {
                 return new Result("", address, "", 0, 0);
             }
             ip = getIp(address);
         } catch (UnknownHostException e) {
-            e.printStackTrace();
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
             return new Result("", address, "", 0, 0);
         } catch (IOException e) {
-            e.printStackTrace();
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
+            return new Result("", address, "", 0, 0);
+        } catch (Exception e) {
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
             return new Result("", address, "", 0, 0);
         }
+
         String cmd = String.format(Locale.getDefault(), "ping -n -i %f -s %d -c %d %s", ((double) interval / 1000), size, count, ip);
         Process process = null;
         StringBuilder str = new StringBuilder();
@@ -115,6 +131,9 @@ public final class Ping implements Task {
         BufferedReader errorReader = null;
         try {
             process = Runtime.getRuntime().exec(cmd);
+            if (null == process) {
+                return new Result(str.toString(), address, ip, size, interval);
+            }
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -136,9 +155,23 @@ public final class Ping implements Task {
             process.waitFor();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            if (null != output) {
+                output.write(e.getMessage());
+            } else {
+                e.printStackTrace();
+            }
         } finally {
             try {
                 if (reader != null) {
@@ -148,7 +181,11 @@ public final class Ping implements Task {
                     process.destroy();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                if (null != output) {
+                    output.write(e.getMessage());
+                } else {
+                    e.printStackTrace();
+                }
             }
         }
         return new Result(str.toString(), address, ip, size, interval);
