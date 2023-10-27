@@ -219,7 +219,12 @@ public class CLSNetDiagnosis {
         Traceroute.Config config =  new Traceroute.Config(domain);
         config.setMaxHop(maxHop);
         config.setCountPerRoute(countPerRoute);
-        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), callback, output);
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TRACEROUTE, result, callback);
+            }
+        }, output);
         traceroute(traceroute);
     }
 
