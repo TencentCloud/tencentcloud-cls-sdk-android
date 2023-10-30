@@ -124,7 +124,11 @@ public final class Ping implements Task {
             return new Result("", address, "", 0, 0);
         }
 
-        String cmd = String.format(Locale.getDefault(), "ping -n -i %f -s %d -c %d %s", ((double) interval / 1000), size, count, ip);
+        String cmdPing = "ping";
+        if (null!=ip && ip.contains(":")) {
+            cmdPing = "ping6";
+        }
+        String cmd = String.format(Locale.getDefault(), "%s -n -i %f -s %d -c %d %s", cmdPing, ((double) interval / 1000), size, count, ip);
         Process process = null;
         StringBuilder str = new StringBuilder();
         BufferedReader reader = null;
