@@ -5,7 +5,7 @@
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.5')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.10')
 ```
 
 ## 日志上传Demo
