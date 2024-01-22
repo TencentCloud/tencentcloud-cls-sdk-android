@@ -32,6 +32,8 @@ public class CommandRunner extends Thread {
                     currentPerformer.run();
             } catch (InterruptedException e) {
                 CLSLog.d(TAG, "[cmd runner interrupt]:" + e == null ? "" : e.getMessage());
+            } catch (Exception e) {
+                CLSLog.d(TAG, "[cmd runner Exception]:" + e == null ? "" : e.getMessage());
             }
         }
     }
