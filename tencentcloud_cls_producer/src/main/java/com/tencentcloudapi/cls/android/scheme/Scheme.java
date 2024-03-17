@@ -75,6 +75,7 @@ public class Scheme {
     public String province;
     public String city;
     public String district;
+    public String dns;
     public Map<String, String> ext;
 
     public Map<String, String> toMap() {
@@ -134,6 +135,7 @@ public class Scheme {
         putIfNotNull(fields, "province", country);
         putIfNotNull(fields, "city", city);
         putIfNotNull(fields, "district", district);
+        putIfNotNull(fields, "dns", dns);
 
         if (null != ext && !ext.isEmpty()) {
             for (Entry<String, String> entry : ext.entrySet()) {
@@ -195,6 +197,7 @@ public class Scheme {
         scheme.access = returnDashIfNull(DeviceUtils.getAccessName(context));
         scheme.access_subtype = returnDashIfNull(DeviceUtils.getAccessSubTypeName(context));
         scheme.root = returnDashIfNull(RootUtil.isDeviceRooted() + "");
+        scheme.dns = returnDashIfNull(DeviceUtils.getDns(context));
 //        scheme.resolution = returnDashIfNull(DeviceUtils.getResolution(context));
 
         return scheme;
