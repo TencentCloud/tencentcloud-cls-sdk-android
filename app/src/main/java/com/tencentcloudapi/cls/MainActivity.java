@@ -12,6 +12,9 @@ import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosis;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosisPlugin;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,8 +28,9 @@ public class MainActivity extends AppCompatActivity {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
-
-        CLSNetDiagnosis.getInstance().traceroute("www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
+        Map<String, String> customFiled = new LinkedHashMap<>();
+        customFiled.put("cls","custom field");
+        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
             @Override
             public void write(String line) {
                 System.out.println(line);
@@ -37,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
                 // result为探测结果，JSON格式。
                 CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
             }
-        });
+        }, customFiled);
 
     }
 
@@ -48,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         CLSConfig config = new CLSConfig(context);
 
-        config.endpoint = "ap-guangzhou.cls.tencentcs.com";
+        config.endpoint = "ap-guangzhou-open.cls.tencentcs.com";
         config.accessKeyId = "";
         config.accessKeySecret = "";
         config.pluginAppId = "666233";
