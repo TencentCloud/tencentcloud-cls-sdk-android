@@ -14,6 +14,10 @@ import com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.net.tracerou
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Diagnosis;
 import com.tencentcloudapi.cls.android.scheme.Scheme;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class CLSNetDiagnosis {
     private static final String TAG = "CLSNetwork";
     /**
@@ -98,7 +102,7 @@ public class CLSNetDiagnosis {
         handler = new Handler(Looper.getMainLooper());
     }
 
-    private void report(Type type, String result, Callback callback) {
+    private void report(Type type, String result, Callback callback, Map<String, String> customField) {
         if (config.debuggable) {
             CLSLog.v(TAG, "diagnosis, result: " + result);
         }
@@ -106,6 +110,13 @@ public class CLSNetDiagnosis {
         if (!TextUtils.isEmpty(scheme.app_id) && scheme.app_id.contains("@")) {
             scheme.app_id = scheme.app_id.substring(0, scheme.app_id.indexOf("@"));
         }
+
+        if (null != customField && !customField.isEmpty()) {
+            for (Map.Entry<String, String> entry : customField.entrySet()) {
+                scheme.ext.put( entry.getKey(), entry.getValue());
+            }
+        }
+
         scheme.result = result;
         if (type == Type.PING) {
             scheme.method = "PING";
@@ -138,6 +149,33 @@ public class CLSNetDiagnosis {
 
     /**
      * @param domain   目标 host，如 cloud.tencent.com
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     * @param customField 自定义字段
+     */
+    public void ping(String domain, Output output, Callback callback, Map<String, String> customField) {
+        this.ping(domain, 10, DEFAULT_PING_BYTES, output, callback);
+    }
+
+    /**
+     * @param domain   目标 host，如 cloud.tencent.com
+     * @param maxTimes 探测的次数
+     * @param size     探测包体积
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     * @param customField 自定义字段
+     */
+    public void ping(String domain, int maxTimes, int size, Output output, Callback callback, Map<String, String> customField) {
+        Diagnosis.ping(domain, maxTimes, size, output, new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.PING, result, callback, customField);
+            }
+        });
+    }
+
+    /**
+     * @param domain   目标 host，如 cloud.tencent.com
      * @param maxTimes 探测的次数
      * @param size     探测包体积
      * @param output   输出 callback
@@ -147,7 +185,61 @@ public class CLSNetDiagnosis {
         Diagnosis.ping(domain, maxTimes, size, output, new Callback() {
             @Override
             public void onComplete(String result) {
-                report(Type.PING, result, callback);
+                report(Type.PING, result, callback, new LinkedHashMap<>());
+            }
+        });
+    }
+
+    /**
+     * @param url   目标 host，如：cloud.tencent.com
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void httpPing(String url, Output output, Callback callback) {
+        Diagnosis.httpPing(url, output, new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.HTTP, result, callback, new LinkedHashMap<>());
+            }
+        });
+    }
+
+    /**
+     * @param url   目标 host，如：cloud.tencent.com
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void httpPing(String url, Output output, Callback callback, Map<String, String> customField) {
+        Diagnosis.httpPing(url, output, new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.HTTP, result, callback, customField);
+            }
+        });
+    }
+
+    /**
+     * @param domain   目标 host，如：cloud.tencent.com
+     * @param port     目标端口，如：80
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void tcpPing(String domain, int port, Output output, Callback callback, Map<String, String> customField) {
+        this.tcpPing(domain, port, 10, DEFAULT_TIMEOUT, output, callback, customField);
+    }
+
+    /**
+     * @param domain   目标 host，如：cloud.tencent.com
+     * @param port     目标端口，如：80
+     * @param maxTimes 探测的次数
+     * @param timeout  单次探测的超时时间
+     * @param callback 回调 callback
+     */
+    public void tcpPing(String domain, int port, int maxTimes, int timeout, Output output, Callback callback, Map<String, String> customField) {
+        Diagnosis.tcpPing(domain, port, maxTimes, timeout, output, new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TCPPING, result, callback, customField);
             }
         });
     }
@@ -163,20 +255,6 @@ public class CLSNetDiagnosis {
     }
 
     /**
-     * @param url   目标 host，如：cloud.tencent.com
-     * @param output   输出 callback
-     * @param callback 回调 callback
-     */
-    public void httpPing(String url, Output output, Callback callback) {
-        Diagnosis.httpPing(url, output, new Callback() {
-            @Override
-            public void onComplete(String result) {
-                report(Type.HTTP, result, callback);
-            }
-        });
-    }
-
-    /**
      * @param domain   目标 host，如：cloud.tencent.com
      * @param port     目标端口，如：80
      * @param maxTimes 探测的次数
@@ -187,7 +265,7 @@ public class CLSNetDiagnosis {
         Diagnosis.tcpPing(domain, port, maxTimes, timeout, output, new Callback() {
             @Override
             public void onComplete(String result) {
-                report(Type.TCPPING, result, callback);
+                report(Type.TCPPING, result, callback, new LinkedHashMap<>());
             }
         });
     }
@@ -201,7 +279,43 @@ public class CLSNetDiagnosis {
         Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
             @Override
             public void onComplete(String result) {
-                report(Type.TRACEROUTE, result, callback);
+                report(Type.TRACEROUTE, result, callback, new LinkedHashMap<>());
+            }
+        }, output);
+        traceroute(traceroute);
+    }
+
+    /**
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param output 输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, Output output, Callback callback, Map<String, String> customField) {
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TRACEROUTE, result, callback, customField);
+            }
+        }, output);
+        traceroute(traceroute);
+    }
+
+    /**
+     *
+     * @param domain 目标 host，如：cloud.tencent.com
+     * @param maxHop
+     * @param countPerRoute
+     * @param output   输出 callback
+     * @param callback 回调 callback
+     */
+    public void traceroute(String domain, int maxHop, int countPerRoute, Output output, Callback callback, Map<String, String> customField) {
+        Traceroute.Config config =  new Traceroute.Config(domain);
+        config.setMaxHop(maxHop);
+        config.setCountPerRoute(countPerRoute);
+        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+            @Override
+            public void onComplete(String result) {
+                report(Type.TRACEROUTE, result, callback, customField);
             }
         }, output);
         traceroute(traceroute);
@@ -222,7 +336,7 @@ public class CLSNetDiagnosis {
         Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
             @Override
             public void onComplete(String result) {
-                report(Type.TRACEROUTE, result, callback);
+                report(Type.TRACEROUTE, result, callback, new LinkedHashMap<>());
             }
         }, output);
         traceroute(traceroute);
