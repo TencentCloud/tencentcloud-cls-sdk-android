@@ -300,22 +300,26 @@ class DeviceUtils {
 
     private static String[] getDnsFromConnectionManager(Context context) {
         LinkedList<String> dnsServers = new LinkedList<>();
-        if (Build.VERSION.SDK_INT >= 21 && context != null) {
-            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
-            if (connectivityManager != null) {
-                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-                if (activeNetworkInfo != null) {
-                    for (Network network : connectivityManager.getAllNetworks()) {
-                        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-                        if (networkInfo != null && networkInfo.getType() == activeNetworkInfo.getType()) {
-                            LinkProperties lp = connectivityManager.getLinkProperties(network);
-                            for (InetAddress addr : lp.getDnsServers()) {
-                                dnsServers.add(addr.getHostAddress());
+        try {
+            if (Build.VERSION.SDK_INT >= 21 && context != null) {
+                ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
+                if (connectivityManager != null) {
+                    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+                    if (activeNetworkInfo != null) {
+                        for (Network network : connectivityManager.getAllNetworks()) {
+                            NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+                            if (networkInfo != null && networkInfo.getType() == activeNetworkInfo.getType()) {
+                                LinkProperties lp = connectivityManager.getLinkProperties(network);
+                                for (InetAddress addr : lp.getDnsServers()) {
+                                    dnsServers.add(addr.getHostAddress());
+                                }
                             }
                         }
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return dnsServers.isEmpty() ? new String[0] : dnsServers.toArray(new String[dnsServers.size()]);
     }
