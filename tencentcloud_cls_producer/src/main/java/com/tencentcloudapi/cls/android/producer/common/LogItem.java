@@ -1,5 +1,7 @@
 package com.tencentcloudapi.cls.android.producer.common;
 
+import com.tencentcloudapi.cls.android.cls.Cls;
+
 import java.util.Date;
 
 /**
@@ -7,7 +9,8 @@ import java.util.Date;
  */
 public class LogItem {
     private static final long serialVersionUID = -3488075856612935955L;
-    public Logs.Log.Builder mContents = Logs.Log.newBuilder();
+
+    public Cls.Log.Builder mContents = Cls.Log.newBuilder();
 
     /**
      * Construct a logItem, the log time is set according to the sys time
@@ -32,7 +35,7 @@ public class LogItem {
      * @param logTime log time stamp
      * @param contents log contents
      */
-    public LogItem(long logTime, Logs.Log.Builder contents) {
+    public LogItem(long logTime, Cls.Log.Builder contents) {
         SetLogContents(contents);
     }
 
@@ -77,7 +80,7 @@ public class LogItem {
      * set log contents
      * @param contents  log contents
      */
-    public void SetLogContents(Logs.Log.Builder contents) {
+    public void SetLogContents(Cls.Log.Builder contents) {
         this.mContents = contents;
     }
 

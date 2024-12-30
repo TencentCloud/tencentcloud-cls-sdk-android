@@ -1,11 +1,13 @@
 package com.tencentcloudapi.cls.android.producer.common;
 
+import com.tencentcloudapi.cls.android.cls.Cls;
+
 /**
  * @author farmerx
  */
 public class LogContent {
     private static final long serialVersionUID = 6042186396863898096L;
-    public Logs.Log.Content.Builder content;
+    public Cls.Log.Content.Builder content;
 
     /**
      * Construct a empty log content
@@ -22,7 +24,7 @@ public class LogContent {
      *            log content value
      */
     public LogContent(String key, String value) {
-        this.content = Logs.Log.Content.newBuilder();
+        this.content = Cls.Log.Content.newBuilder();
         content.setKey(key).setValue(value);
     }
 

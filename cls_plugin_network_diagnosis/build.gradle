@@ -56,15 +56,15 @@ afterEvaluate {
                 def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 //                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
 //                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                allowInsecureProtocol(true)
-                credentials {
-                    username = "$mavenUser"
-                    password = "$mavenPassword"
-                }
-                authentication{
-                    basic(BasicAuthentication)
-                }
+//                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+//                allowInsecureProtocol(true)
+//                credentials {
+//                    username = "$mavenUser"
+//                    password = "$mavenPassword"
+//                }
+//                authentication{
+//                    basic(BasicAuthentication)
+//                }
             }
         }
     }

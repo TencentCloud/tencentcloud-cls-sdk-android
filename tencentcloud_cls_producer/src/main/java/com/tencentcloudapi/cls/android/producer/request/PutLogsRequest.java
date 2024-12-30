@@ -1,6 +1,6 @@
 package com.tencentcloudapi.cls.android.producer.request;
 
-import com.tencentcloudapi.cls.android.producer.common.Logs;
+import com.tencentcloudapi.cls.android.cls.Cls;
 import com.tencentcloudapi.cls.android.producer.common.Constants;
 import com.tencentcloudapi.cls.android.producer.common.Constants.CompressType;
 
@@ -15,7 +15,7 @@ public class PutLogsRequest extends Request {
 	private static final long serialVersionUID = 7226856831224917838L;
 	private String mTopic;
 	private String mSource;
-	private Logs.LogGroup.Builder mlogItems;
+	private Cls.LogGroup.Builder mlogItems;
 	private CompressType compressType = CompressType.LZ4;
 	private String mContentType = Constants.CONST_PROTO_BUF;
 	private String mFilename;
@@ -57,7 +57,7 @@ public class PutLogsRequest extends Request {
 	 * @param source source of the log
 	 * @param logItems log data
 	 */
-	public PutLogsRequest(String topic, String source, String filename, Logs.LogGroup.Builder logItems) {
+	public PutLogsRequest(String topic, String source, String filename, Cls.LogGroup.Builder logItems) {
 		super();
 		mTopic = topic;
 		mSource = source;
@@ -106,7 +106,7 @@ public class PutLogsRequest extends Request {
 	 * 
 	 * @return log data
 	 */
-	public Logs.LogGroup.Builder GetLogItems() {
+	public Cls.LogGroup.Builder GetLogItems() {
 		return mlogItems;
 	}
 
@@ -116,7 +116,7 @@ public class PutLogsRequest extends Request {
 	 * @return logGroupBytes
 	 */
 	public byte[] GetLogGroupBytes(String sourceIp, String PackageId) {
-		Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
+		Cls.LogGroupList.Builder grpList = Cls.LogGroupList.newBuilder();
 		this.mlogItems.setFilename(this.mFilename);
 		this.mlogItems.setContextFlow(PackageId);
 
@@ -134,7 +134,7 @@ public class PutLogsRequest extends Request {
 	 * 
 	 * @param logItems log data
 	 */
-	public void SetlogItems(Logs.LogGroup.Builder logItems) {
+	public void SetlogItems(Cls.LogGroup.Builder logItems) {
 		mlogItems = logItems;
 	}
 }

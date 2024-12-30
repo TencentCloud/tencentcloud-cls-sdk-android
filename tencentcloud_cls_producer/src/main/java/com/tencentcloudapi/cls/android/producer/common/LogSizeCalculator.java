@@ -1,4 +1,6 @@
 package com.tencentcloudapi.cls.android.producer.common;
+import com.tencentcloudapi.cls.android.cls.Cls;
+
 import java.util.List;
 
 
@@ -9,7 +11,7 @@ public abstract class LogSizeCalculator {
 
     public static int calculate(LogItem logItem) {
         int sizeInBytes = 4;
-        for (Logs.Log.Content content : logItem.mContents.getContentsList()) {
+        for (Cls.Log.Content content : logItem.mContents.getContentsList()) {
             if (content.getKey() != null) {
                 sizeInBytes += content.getKey().length();
             }

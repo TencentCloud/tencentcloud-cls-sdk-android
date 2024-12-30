@@ -8,10 +8,8 @@ import com.tencentcloudapi.cls.android.producer.AsyncProducerConfig;
 import com.tencentcloudapi.cls.android.producer.common.LogContent;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
 import com.tencentcloudapi.cls.android.producer.errors.ProducerException;
-import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
 import com.tencentcloudapi.cls.android.scheme.Scheme;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -2,6 +2,7 @@ package com.tencentcloudapi.cls.android.producer.common;
 
 import com.google.common.math.LongMath;
 import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.cls.Cls;
 import com.tencentcloudapi.cls.android.producer.AsyncProducerConfig;
 import com.tencentcloudapi.cls.android.producer.http.client.Sender;
 import com.tencentcloudapi.cls.android.producer.http.comm.HttpMethod;
@@ -77,7 +78,7 @@ public class SendProducerBatchTask implements Runnable {
      */
     private PutLogsRequest buildPutLogsRequest(ProducerBatch batch) {
         List<LogItem> list = batch.getLogItems();
-        Logs.LogGroup.Builder logGroup = Logs.LogGroup.newBuilder();
+        Cls.LogGroup.Builder logGroup = Cls.LogGroup.newBuilder();
         for(LogItem tmp:list){
             logGroup.addLogs(tmp.mContents);
         }
