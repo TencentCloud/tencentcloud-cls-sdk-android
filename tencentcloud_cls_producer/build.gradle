@@ -20,7 +20,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'tencentcloud-cls-sdk-android'
-                version = '1.0.14'
+                version = '1.0.14-lite'
                 from components.release
                 artifact sourcesJar
 
@@ -55,15 +55,15 @@ afterEvaluate {
                 def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 //                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
 //                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
-//                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-//                allowInsecureProtocol(true)
-//                credentials {
-//                    username = "$mavenUser"
-//                    password = "$mavenPassword"
-//                }
-//                authentication{
-//                    basic(BasicAuthentication)
-//                }
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                allowInsecureProtocol(true)
+                credentials {
+                    username = "$mavenUser"
+                    password = "$mavenPassword"
+                }
+                authentication{
+                    basic(BasicAuthentication)
+                }
             }
         }
     }
@@ -78,7 +78,7 @@ android {
         minSdk 19
         targetSdk 31
         versionCode 1
-        versionName "1.0.14"
+        versionName "1.0.14-lite"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -97,7 +97,7 @@ android {
 }
 
 dependencies {
-    implementation group: 'com.google.protobuf', name: 'protobuf-javalite', version: '4.29.2'
+    implementation 'com.google.protobuf:protobuf-java:3.25.5'
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'org.lz4:lz4-java:1.8.0'
     testImplementation 'junit:junit:4.+'
