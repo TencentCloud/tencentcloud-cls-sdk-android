@@ -309,10 +309,10 @@ public class CLSNetDiagnosis {
      * @param callback 回调 callback
      */
     public void traceroute(String domain, int maxHop, int countPerRoute, Output output, Callback callback, Map<String, String> customField) {
-        Traceroute.Config config =  new Traceroute.Config(domain);
+        Traceroute.Config config = new Traceroute.Config(domain);
         config.setMaxHop(maxHop);
         config.setCountPerRoute(countPerRoute);
-        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+        Traceroute traceroute = new Traceroute(config, new Callback() {
             @Override
             public void onComplete(String result) {
                 report(Type.TRACEROUTE, result, callback, customField);
@@ -333,7 +333,7 @@ public class CLSNetDiagnosis {
         Traceroute.Config config =  new Traceroute.Config(domain);
         config.setMaxHop(maxHop);
         config.setCountPerRoute(countPerRoute);
-        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
+        Traceroute traceroute = new Traceroute(config, new Callback() {
             @Override
             public void onComplete(String result) {
                 report(Type.TRACEROUTE, result, callback, new LinkedHashMap<>());
