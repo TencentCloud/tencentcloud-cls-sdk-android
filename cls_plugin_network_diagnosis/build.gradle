@@ -1,29 +1,19 @@
 plugins {
+    id 'org.jreleaser' version '1.19.0'
     id 'com.android.library'
     id 'maven-publish'
     id 'signing'
 }
 
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    archiveClassifier.set("sources")
-    exclude "**/R.class"
-    exclude "**/BuildConfig.class"
-}
-signing {
-    sign publishing.publications
-}
-
-
+version = '1.0.15'
 afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
                 groupId = 'com.tencentcloudapi.cls'
                 artifactId = 'cls-network-diagnosis-reporter-android'
-                version = '1.0.15'
+                version = project.version
                 from components.release
-                artifact sourcesJar
 
                 pom {
                     name = artifactId
@@ -52,26 +42,38 @@ afterEvaluate {
         }
         repositories {
             maven {
-                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-//                def releasesRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty"
-//                def snapshotsRepoUrl = "https://mirrors.tencent.com/repository/maven/thirdparty-snapshots"
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                allowInsecureProtocol(true)
-                credentials {
-                    username = "$mavenUser"
-                    password = "$mavenPassword"
-                }
-                authentication{
-                    basic(BasicAuthentication)
-                }
+                url = layout.buildDirectory.dir('staging-deploy')
             }
         }
     }
 }
 
+jreleaser {
+    signing {
+        active = 'ALWAYS'
+        armored = true
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'ALWAYS'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepository('build/staging-deploy')
+                    verifyPom = false
+                    namespace = 'com.tencentcloudapi.cls'
+                    snapshotSupported = true
+                }
+            }
+        }
+    }
+    gitRootSearch = true
+}
+
 android {
     compileSdk 31
+
+    namespace "com.tencentcloudapi.cls.plugin.network_diagnosis"
 
     defaultConfig {
         minSdk 19
@@ -92,6 +94,12 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 }
 
