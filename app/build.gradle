@@ -4,6 +4,7 @@ plugins {
 
 android {
     compileSdk 31
+    namespace 'com.tencentcloudapi.cls'
 
     defaultConfig {
         applicationId "com.tencentcloudapi.cls"

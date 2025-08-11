@@ -16,7 +16,7 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
 
     @Override
     public String version() {
-        return BuildConfig.LIBRARY_PACKAGE_NAME;
+        return "1.0.15";
     }
 
     @Override
