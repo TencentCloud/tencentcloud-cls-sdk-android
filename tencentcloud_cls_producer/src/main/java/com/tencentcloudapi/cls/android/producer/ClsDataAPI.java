@@ -6,8 +6,6 @@ import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
 
 import android.util.Base64;
-
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +23,7 @@ public class ClsDataAPI {
         return mClsConfigOptions;
     }
     /**
-     * 初始化神策 SDK
+     * 初始化CLS SDK
      *
      * @param context App 的 Context
      * @param clsConfigOptions SDK 的配置项
@@ -68,7 +66,7 @@ public class ClsDataAPI {
     }
 
     /**
-     * 获取 SensorsDataAPI 单例
+     * 获取 ClsDataAPI 单例
      *
      * @param context App的Context
      * @return SensorsDataAPI 单例
