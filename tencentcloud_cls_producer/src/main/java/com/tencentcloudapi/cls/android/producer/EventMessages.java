@@ -32,18 +32,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
-
 public class EventMessages {
     private static final String TAG = "CLS.EventMessages";
-
     private static final int FLUSH_QUEUE = 3;
     private static final int DELETE_ALL = 4;
     private static final int FLUSH_SCHEDULE = 5;
@@ -55,6 +49,18 @@ public class EventMessages {
     private static final Map<Context, EventMessages> S_INSTANCES = new HashMap<>();
 
     private final ClsConfigOptions mClsConfigOptions;
+
+    /**
+     * 是否停止
+     */
+    private boolean isStop = false;
+
+    public void stop() {
+        isStop = true;
+    }
+    public boolean isStopped() {
+        return isStop;
+    }
 
     /**
      * 不要直接调用，通过 getInstance 方法获取实例
@@ -130,7 +136,6 @@ public class EventMessages {
         try {
             final Message m = Message.obtain();
             m.what = FLUSH_QUEUE;
-
             mWorker.runMessage(m);
         } catch (Exception e) {
             CLSLog.printStackTrace(e);
@@ -139,6 +144,10 @@ public class EventMessages {
 
     public void flushScheduled() {
         try {
+            if (isStop) {
+                CLSLog.i(TAG, "EventMessage stop flushScheduled");
+                return;
+            }
             final Message m = Message.obtain();
             m.what = FLUSH_SCHEDULE;
             mWorker.runMessageOnce(m, mClsConfigOptions.getFlushInterval());
@@ -279,15 +288,17 @@ public class EventMessages {
                 in = connection.getErrorStream();
             }
             byte[] responseBody = slurp(in);
+            String requestID = connection.getHeaderField(Constants.CONST_X_SLS_REQUESTID);
+
             in.close();
             in = null;
 
             String response = new String(responseBody, StandardCharsets.UTF_8);
-            CLSLog.i("SendHttpRequest", String.format("ret_code: %d,ret_content: %s", responseCode, response));
+            CLSLog.i("SendHttpRequest", String.format("ret_code: %d, request_id: %s, ret_content: %s", responseCode, requestID, response));
             if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
                 // 校验错误
-                throw new ResponseErrorException(String.format("flush failure with response '%s', the response code is '%d'",
-                        response, responseCode), responseCode);
+                throw new ResponseErrorException(String.format("flush failure with response '%s', the response code is '%d', request id is '%s'",
+                        response, responseCode, requestID), responseCode);
             }
         } catch (IOException e) {
             throw new ConnectErrorException(e);
@@ -304,12 +315,9 @@ public class EventMessages {
         while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
             buffer.write(data, 0, nRead);
         }
-
         buffer.flush();
         return buffer.toByteArray();
     }
-
-
     public static void closeStream(BufferedOutputStream bout, OutputStream out, InputStream in, HttpURLConnection connection) {
         if (null != bout) {
             try {
@@ -345,21 +353,19 @@ public class EventMessages {
     }
 
     /**
-     * 在服务器正常返回状态码的情况下，目前只有 (>= 500 && < 600) || 404 || 403 才不删数据
+     * 在服务器正常返回状态码的情况下，目前只有 (>= 500 && < 600) || 429 || 408 || 403 才不删数据
      *
      * @param httpCode 状态码
      * @return true: 删除数据，false: 不删数据
      */
     private boolean isDeleteEventsByCode(int httpCode) {
-        boolean shouldDelete = httpCode != HttpURLConnection.HTTP_NOT_FOUND &&
-                httpCode != HttpURLConnection.HTTP_FORBIDDEN &&
-                (httpCode < HttpURLConnection.HTTP_INTERNAL_ERROR || httpCode >= 600);
-        return shouldDelete;
+        if (httpCode >= HttpURLConnection.HTTP_INTERNAL_ERROR) {
+            return false;
+        }
+        return httpCode != HttpURLConnection.HTTP_CLIENT_TIMEOUT && httpCode != 429 && httpCode != HttpURLConnection.HTTP_FORBIDDEN;
     }
 
     // Worker will manage the (at most single) IO thread associated with
-    // this AnalyticsMessages instance.
-    // XXX: Worker class is unnecessary, should be just a subclass of HandlerThread
     private class Worker {
 
         private final Object mHandlerLock = new Object();
@@ -370,7 +376,7 @@ public class EventMessages {
                     new HandlerThread("com.tencentcloudapi.cls.android.producer.AnalyticsMessages.Worker",
                             Thread.MIN_PRIORITY);
             thread.start();
-            mHandler = new AnalyticsMessageHandler(thread.getLooper());
+            mHandler = new EventMessageHandler(thread.getLooper());
         }
 
         void runMessage(Message msg) {
@@ -397,9 +403,9 @@ public class EventMessages {
             }
         }
 
-        private class AnalyticsMessageHandler extends Handler {
+        private class EventMessageHandler extends Handler {
 
-            AnalyticsMessageHandler(Looper looper) {
+            EventMessageHandler(Looper looper) {
                 super(looper);
             }
 
@@ -421,7 +427,7 @@ public class EventMessages {
                     } else if (msg.what == FLUSH_INSTANT_EVENT) {
                         sendData(true);
                     } else {
-                        CLSLog.i(TAG, "Unexpected message received by SensorsData worker: " + msg);
+                        CLSLog.i(TAG, "Unexpected message received by CLSData worker: " + msg);
                     }
                 } catch (final RuntimeException e) {
                     CLSLog.i(TAG, e.getMessage());

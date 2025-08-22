@@ -40,10 +40,14 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }, customFiled);
 //
+//        String SA_SERVER_URL = "数据接收地址";
+//
+//        // 初始化配置
         ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
                 "ap-guangzhou-open.cls.tencentcs.com",
-                "",
-                new Credential("", ""   ));
+                "1",
+                new Credential("", ""));
+        clsConfigOptions.enableLog(true);
         ClsDataAPI.startWithConfigOptions(this, clsConfigOptions);
         LogItem logItem = new LogItem();
         logItem.SetTime(System.currentTimeMillis());

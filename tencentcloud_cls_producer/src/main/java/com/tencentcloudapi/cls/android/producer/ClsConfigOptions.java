@@ -1,11 +1,11 @@
 package com.tencentcloudapi.cls.android.producer;
 
+import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.Credential;
 import com.tencentcloudapi.cls.android.producer.util.Args;
 import com.tencentcloudapi.cls.android.producer.util.NetworkType;
 
 public class ClsConfigOptions {
-
     /**
      * 日志服务CLS endpoint 接入域名，如：ap-guangzhou.cls.tencentcs.com
      */
@@ -71,11 +71,14 @@ public class ClsConfigOptions {
      * 是否打印日志
      *
      * @param enableLog 是否开启打印日志
-     * @return SAOptionsConfig
+     * @return ClsOptionsConfig
      */
     public ClsConfigOptions enableLog(boolean enableLog) {
         this.mLogEnabled = enableLog;
         return this;
+    }
+    public boolean isLogEnabled() {
+        return mLogEnabled;
     }
 
 
@@ -116,7 +119,7 @@ public class ClsConfigOptions {
     }
 
     /**
-     * New Async Client Config
+     * ClsConfigOptions 构造函数
      * @param endpoint tencent cloud cls endpoint
      * @param topicId tencent cloud cls 日志主题id
      * @param credential tencent cloud credential

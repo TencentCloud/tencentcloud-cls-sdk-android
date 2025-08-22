@@ -24,7 +24,7 @@ public class ClsDataDBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        CLSLog.i(TAG, "Creating a new Sensors Analytics DB");
+        CLSLog.i(TAG, "Creating a new CLS Analytics DB");
         createTable(db);
     }
 

@@ -1,11 +1,9 @@
 package com.tencentcloudapi.cls.android.producer;
 
 import android.content.Context;
-
+import android.util.Base64;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
-
-import android.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,8 +54,9 @@ public class ClsDataAPI {
      */
     ClsDataAPI(Context context, ClsConfigOptions clsConfigOptions) {
         mClsConfigOptions = clsConfigOptions;
-        CLSLog.i("CLSDataAPI", String.valueOf(mClsConfigOptions.getFlushInterval()));
-        System.out.println(clsConfigOptions.getFlushInterval());
+        if (mClsConfigOptions.isLogEnabled()) {
+            CLSLog.setEnableLog(true);
+        }
         this.mMessages = EventMessages.getInstance(context, mClsConfigOptions);
         this.mMessages.flushScheduled();
         mTrackTaskManager = TrackTaskManager.getInstance();
@@ -69,7 +68,7 @@ public class ClsDataAPI {
      * 获取 ClsDataAPI 单例
      *
      * @param context App的Context
-     * @return SensorsDataAPI 单例
+     * @return ClsDataAPI 单例
      */
     public static ClsDataAPI sharedInstance(Context context) {
         try {
@@ -112,6 +111,17 @@ public class ClsDataAPI {
         }
     }
 
+    public void flush() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
+            @Override
+            public void run() {
+                mMessages.flush();
+            }
+        });
+    }
+
+
+
     public void stopTrackThread() {
         if (mTrackTaskManagerThread != null && !mTrackTaskManagerThread.isStopped()) {
             mTrackTaskManagerThread.stop();
@@ -120,7 +130,10 @@ public class ClsDataAPI {
     }
 
     public void close() {
-        mTrackTaskManagerThread.stop();
+        stopTrackThread();
+        if (mMessages!=null && !mMessages.isStopped()){
+            mMessages.stop();
+        }
     }
 
     public void deleteAll() {
