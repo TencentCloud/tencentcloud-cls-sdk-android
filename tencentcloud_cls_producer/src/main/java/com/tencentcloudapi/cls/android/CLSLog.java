@@ -25,6 +25,15 @@ public final class CLSLog {
         Log.e(TAG, format(module, msg));
     }
 
+    public static void i(String module, Object msg) {
+        Log.i(TAG, format(module, msg));
+    }
+    public static void printStackTrace(Exception e) {
+        if (e != null) {
+            Log.e("SA.Exception", "", e);
+        }
+    }
+
     private static String format(String module, Object msg) {
         return String.format("module: %s, %s", module, toString(msg));
     }

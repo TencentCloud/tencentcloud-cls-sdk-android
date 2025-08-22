@@ -49,7 +49,6 @@ public class AsyncProducerConfig {
     private long baseRetryBackoffMs = Constants.DEFAULT_BASE_RETRY_BACKOFF_MS;
 
     private long maxRetryBackoffMs = Constants.DEFAULT_MAX_RETRY_BACKOFF_MS;
-
     /**
      * New Async Client Config
      * @param endpoint tencent cloud cls endpoint
