@@ -188,7 +188,7 @@ public class EventMessages {
             boolean deleteEvents = true;
             byte[][] eventsData;
             synchronized (mDbAdapter) {
-                eventsData = mDbAdapter.generateDataString(DbParams.TABLE_EVENTS, 50, is_instant_event);
+                eventsData = mDbAdapter.generateDataString(DbParams.TABLE_EVENTS, mClsConfigOptions.getFlushBulkSize(), is_instant_event);
             }
             if (eventsData == null) {
                 return;

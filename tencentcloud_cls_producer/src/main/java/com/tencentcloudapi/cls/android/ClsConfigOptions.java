@@ -101,6 +101,9 @@ public class ClsConfigOptions {
 
     public ClsConfigOptions setFlushBulkSize(int flushBulkSize) {
         this.flushBulkSize = Math.max(50, flushBulkSize);
+        if (this.flushBulkSize > 4096) {
+            this.flushBulkSize = 4096;
+        }
         return this;
     }
 
