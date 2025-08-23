@@ -104,8 +104,7 @@ class EventDataOperation extends DataOperation {
                         CLSLog.printStackTrace(e);
                     }
                 }
-                Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
-                data = grpList.addLogGroupList(logGroupBuilder).build().toByteArray();
+                data = logGroupBuilder.build().toByteArray();
                 if (idArray.length() > 0) {
                     eventIds = idArray.toString().getBytes(StandardCharsets.UTF_8);
                 }

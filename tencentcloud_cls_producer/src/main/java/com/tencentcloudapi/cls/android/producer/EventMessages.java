@@ -11,9 +11,11 @@ import android.text.TextUtils;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.exceptions.ConnectErrorException;
+import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
 import com.tencentcloudapi.cls.android.exceptions.ResponseErrorException;
 import com.tencentcloudapi.cls.android.producer.common.Constants;
 import com.tencentcloudapi.cls.android.producer.common.LogException;
+import com.tencentcloudapi.cls.android.producer.common.Logs;
 import com.tencentcloudapi.cls.android.producer.data.adapter.DbAdapter;
 import com.tencentcloudapi.cls.android.producer.data.adapter.DbParams;
 import com.tencentcloudapi.cls.android.producer.http.comm.HttpMethod;
@@ -197,8 +199,16 @@ public class EventMessages {
             final byte[] rawMessage = eventsData[1];
             String errorMessage = null;
             try {
-                // 内容压缩
-                byte[] compressedData = LZ4Encoder.compressToLhLz4Chunk(rawMessage);
+                Logs.LogGroup.Builder logGroupBuilder = Logs.LogGroup.newBuilder();
+                Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
+                byte[] compressedData;
+                try {
+                    // 内容压缩
+                    logGroupBuilder.mergeFrom(rawMessage);
+                    compressedData = LZ4Encoder.compressToLhLz4Chunk(grpList.addLogGroupList(logGroupBuilder).build().toByteArray());
+                } catch (Exception e) {
+                    throw new InvalidDataException(e.getMessage());
+                }
                 // 构造请求header 头
                 HashMap<String, String> headParameter = new HashMap<>(3);
                 headParameter.put(Constants.CONST_CONTENT_LENGTH, String.valueOf(compressedData.length));
@@ -228,7 +238,7 @@ public class EventMessages {
             } catch (ConnectErrorException e) {
                 deleteEvents = false;
                 errorMessage = "Connection error: " + e.getMessage();
-            } catch (LogException e) {
+            } catch (InvalidDataException e) {
                 errorMessage = "Invalid data: " + e.getMessage();
             } catch (ResponseErrorException e) {
                 deleteEvents = isDeleteEventsByCode(e.getHttpCode());
