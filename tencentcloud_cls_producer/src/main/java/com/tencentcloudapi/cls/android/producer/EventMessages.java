@@ -318,7 +318,7 @@ public class EventMessages {
             in = null;
 
             String response = new String(responseBody, StandardCharsets.UTF_8);
-            CLSLog.i("SendHttpRequest", String.format("ret_code: %d, request_id: %s, ret_content: %s", responseCode, requestID, response));
+            CLSLog.i("CLS.SendHttpRequest", String.format("ret_code: %d, request_id: %s, ret_content: %s", responseCode, requestID, response));
             if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
                 // 校验错误
                 throw new ResponseErrorException(String.format("flush failure with response '%s', the response code is '%d', request id is '%s'",
