@@ -67,7 +67,6 @@ public class ClsConfigOptions {
         return this;
     }
 
-
     /**
      * 是否打印日志
      *

@@ -12,6 +12,18 @@
 secretId和secretKey为云API密钥，密钥信息获取请前往[密钥获取](https://console.cloud.tencent.com/cam/capi)。并请确保云API密钥关联的账号具有相应的[SDK上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)
 
 
+##
+```agsl
+1、SDK 本地数据库默认缓存数据的上限值为 32 MB。支持通过 setMaxCacheSize() 方法来设定缓存数据的上限值。参数单位为 byte
+2、默认的 flushBulkSize 为 100 条，默认的 flushInterval 为 15 秒。满足条件后，cls SDK 会将数据 lz4 压缩后，批量发送到cls。
+3、当存储数量达到上限值，会依次丢弃老数据，保留最新的数据
+
+数据flush条件：
+1、用户主动触发
+2、与上次发送的时间间隔是否大于 flushInterval
+3、本地缓存日志数目是否大于 flushBulkSize
+```
+
 ## 日志上传Demo
 
 ```
