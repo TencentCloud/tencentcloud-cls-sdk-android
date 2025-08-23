@@ -5,7 +5,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.0.15'
+version = '2.0.0'
 afterEvaluate {
     publishing {
         publications {
@@ -78,8 +78,6 @@ android {
     defaultConfig {
         minSdk 19
         targetSdk 31
-        versionCode 1
-        versionName "1.0.15"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"

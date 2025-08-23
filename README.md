@@ -5,7 +5,7 @@
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.13')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.0')
 ```
 ### 密钥信息
 
@@ -15,51 +15,70 @@ secretId和secretKey为云API密钥，密钥信息获取请前往[密钥获取](
 ## 日志上传Demo
 
 ```
-public static void main(String[] args) {
-        String endpoint = "ap-guangzhou.cls.tencentcs.com";
-        // API密钥 secretId，必填
-        String secretId = "";
-        // API密钥 secretKey，必填
-        String secretKey = "";
-        // 日志主题ID，必填
-        String topicId = "";
-         
-        // NetworkUtils.getLocalMachineIP() 获取本地网卡ip，如果不指定，默认填充服务端接收到的网络出口ip
-        final AsyncProducerConfig config = new AsyncProducerConfig(endpoint, secretId, secretKey, "", NetworkUtils.getLocalMachineIP());
+public class MainActivity extends AppCompatActivity {
 
-        // 构建一个客户端实例
-        final AsyncProducerClient client = new AsyncProducerClient(config);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        singletonInit(this);
 
-        for (int i = 0; i < 10000; ++i) {
-            List<LogItem> logItems = new ArrayList<>();
-            int ts = (int) (System.currentTimeMillis() / 1000);
-            LogItem logItem = new LogItem(ts);
-            logItem.PushBack(new LogContent("__CONTENT__", "你好，我来自深圳|hello world"));
-            logItem.PushBack(new LogContent("city", "guangzhou"));
-            logItem.PushBack(new LogContent("logNo", Integer.toString(i)));
-            logItem.PushBack(new LogContent("__PKG_LOGID__", (String.valueOf(System.currentTimeMillis()))));
-            logItems.add(logItem);
-            client.putLogs(topicId, logItems, result -> System.out.println(result.toString()));
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
         }
-        client.close();
+        sendLog(this);
+    }
+
+
+    public void singletonInit(Context context) {
+        ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
+                "ap-guangzhou-open.cls.tencentcs.com",
+                "1",
+                new Credential("", ""));
+        clsConfigOptions.enableLog(true);
+        ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
+        // 添加插件，自定义插件上报CLS内容
+        AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();
+        clsNetDiagnosisPlugin.addCustomField("test", "tag");
+        ClsDataAPI.sharedInstance(context).
+                addPlugin(clsNetDiagnosisPlugin).
+                startPlugin(context);
+    }
+
+    public void clsNetDiagnosis() {
+        Map<String, String> customFiled = new LinkedHashMap<>();
+        customFiled.put("cls","custom field");
+        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
+            @Override
+            public void write(String line) {
+                System.out.println(line);
+            }
+        }, new CLSNetDiagnosis.Callback() {
+            @Override
+            public void onComplete(String result) {
+                // result为探测结果，JSON格式。
+                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
+            }
+        }, customFiled);
+    }
+
+    public void sendLog(Context context) {
+        LogItem logItem = new LogItem();
+        logItem.SetTime(System.currentTimeMillis());
+        logItem.PushBack("hello", "world");
+        try {
+            ClsDataAPI.sharedInstance(context).trackLog(logItem);
+        } catch (InvalidDataException e) {
+            CLSLog.printStackTrace(e);
+        }
+    }
+
 }
    
 ```
 
 ### 配置参数详解
-
-| 参数                | 类型   | 描述                                                         |
-| ------------------- | ------ | ------------------------------------------------------------ |
-| TotalSizeInBytes    | Int64  | 实例能缓存的日志大小上限，默认为 100MB。       |
-| MaxSendThreadCount  | Int64  | client能并发的最多"goroutine"的数量，默认为50 |
-| MaxBlockSec         | Int    | 如果client可用空间不足，调用者在 send 方法上的最大阻塞时间，默认为 60 秒。<br/>如果超过这个时间后所需空间仍无法得到满足，send 方法会抛出TimeoutException。如果将该值设为0，当所需空间无法得到满足时，send 方法会立即抛出 TimeoutException。如果您希望 send 方法一直阻塞直到所需空间得到满足，可将该值设为负数。 |
-| MaxBatchSize        | Int64  | 当一个Batch中缓存的日志大小大于等于 batchSizeThresholdInBytes 时，该 batch 将被发送，默认为 512 KB，最大可设置成 5MB。 |
-| MaxBatchCount       | Int    | 当一个Batch中缓存的日志条数大于等于 batchCountThreshold 时，该 batch 将被发送，默认为 4096，最大可设置成 40960。 |
-| LingerMs            | Int64  | Batch从创建到可发送的逗留时间，默认为 2 秒，最小可设置成 100 毫秒。 |
-| Retries             | Int    | 如果某个Batch首次发送失败，能够对其重试的次数，默认为 10 次。<br/>如果 retries 小于等于 0，该 ProducerBatch 首次发送失败后将直接进入失败队列。 |
-| MaxReservedAttempts | Int    | 每个Batch每次被尝试发送都对应着一个Attemp，此参数用来控制返回给用户的 attempt 个数，默认只保留最近的 11 次 attempt 信息。<br/>该参数越大能让您追溯更多的信息，但同时也会消耗更多的内存。 |
-| BaseRetryBackoffMs  | Int64  | 首次重试的退避时间，默认为 100 毫秒。 client采样指数退避算法，第 N 次重试的计划等待时间为 baseRetryBackoffMs * 2^(N-1)。 |
-| MaxRetryBackoffMs   | Int64  | 重试的最大退避时间，默认为 50 秒。                           |
 
 
 
@@ -69,8 +88,8 @@ public static void main(String[] args) {
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '1.0.13')
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '1.0.13')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '2.0.0')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.0')
 ```
 
 接入Android应用的网络数据所涉及的依赖包说明如下表所示。
@@ -158,26 +177,54 @@ IDE将根据Android Studio提示，自动创建一个名为MyApplication的类�
 * 在MyApplication.onCreate方法中，增加如下初始化代码。
 
 ```
-public class MyApplication extends Application {
+public class MainActivity extends AppCompatActivity {
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        
-        CLSAdapter adapter = CLSAdapter.getInstance();
-        // 添加网络探测插件。
-        adapter.addPlugin(new CLSNetDiagnosisPlugin());
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        singletonInit(this);
 
-        CLSConfig config = new CLSConfig(this);
-        config.endpoint = "ap-guangzhou.cls.tencentcs.com";
-        config.accessKeyId = "";
-        config.accessKeySecret = "";
-        config.pluginAppId = "123456";
-        config.topicId = "";
-        // 发布时，建议关闭，即配置为config.debuggable = false。
-        config.debuggable = true;
-        adapter.init(config);
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+        clsNetDiagnosis();
     }
+
+
+    public void singletonInit(Context context) {
+        ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
+                "ap-guangzhou-open.cls.tencentcs.com",
+                "1",
+                new Credential("", ""));
+        clsConfigOptions.enableLog(true);
+        ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
+        // 添加插件，自定义插件上报CLS内容
+        AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();
+        clsNetDiagnosisPlugin.addCustomField("test", "tag");
+        ClsDataAPI.sharedInstance(context).
+                addPlugin(clsNetDiagnosisPlugin).
+                startPlugin(context);
+    }
+
+    public void clsNetDiagnosis() {
+        Map<String, String> customFiled = new LinkedHashMap<>();
+        customFiled.put("cls","custom field");
+        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
+            @Override
+            public void write(String line) {
+                System.out.println(line);
+            }
+        }, new CLSNetDiagnosis.Callback() {
+            @Override
+            public void onComplete(String result) {
+                // result为探测结果，JSON格式。
+                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
+            }
+        }, customFiled);
+    }
+
 }
 ```
 
