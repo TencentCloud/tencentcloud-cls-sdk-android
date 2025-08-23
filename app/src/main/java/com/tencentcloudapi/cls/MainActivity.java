@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
                 "1",
                 new Credential("", ""));
         clsConfigOptions.enableLog(true);
+        clsConfigOptions.addTag("cls_android", "2.0.0");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
         AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();

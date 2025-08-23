@@ -147,19 +147,19 @@ public class ClsConfigOptions {
 
     private String appVersion = "--";
     private String appName = "--";
-//    private Map<String, String> tag = new LinkedHashMap<>();
-//    public void addTag(String key, String value) {
-//        if (null == key) {
-//            key = "null";
-//        }
-//        if(null == value) {
-//            value = "null";
-//        }
-//        tag.put(key, value);
-//    }
-//    public Map<String, String> getTag() {
-//        return tag;
-//    }
+    private final Map<String, String> tag = new LinkedHashMap<>();
+    public void addTag(String key, String value) {
+        if (null == key) {
+            key = "null";
+        }
+        if(null == value) {
+            value = "null";
+        }
+        tag.put(key, value);
+    }
+    public Map<String, String> getTag() {
+        return tag;
+    }
 
     public String getAppVersion() {
         return appVersion;

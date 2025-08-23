@@ -22,6 +22,7 @@ import com.tencentcloudapi.cls.android.producer.http.comm.HttpMethod;
 import com.tencentcloudapi.cls.android.producer.util.LZ4Encoder;
 import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
 import com.tencentcloudapi.cls.android.producer.util.QcloudClsSignature;
+import com.tencentcloudapi.cls.android.producer.util.Utils;
 
 import org.json.JSONArray;
 
@@ -37,8 +38,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class EventMessages {
     private static final String TAG = "CLS.EventMessages";
+
+    private static final AtomicLong BATCH_ID = new AtomicLong(0);
+
+    private final String producerHash;
     private static final int FLUSH_QUEUE = 3;
     private static final int DELETE_ALL = 4;
     private static final int FLUSH_SCHEDULE = 5;
@@ -71,6 +78,7 @@ public class EventMessages {
         mDbAdapter = DbAdapter.getInstance(context);
         mWorker = new Worker();
         mClsConfigOptions = clsConfigOptions;
+        producerHash = Utils.generateProducerHash(0);
     }
 
     /**
@@ -203,8 +211,13 @@ public class EventMessages {
                 Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
                 byte[] compressedData;
                 try {
-                    // 内容压缩
                     logGroupBuilder.mergeFrom(rawMessage);
+                    logGroupBuilder.setContextFlow(Utils.generatePackageId(producerHash, BATCH_ID));
+                    // 增加tag
+                    for (Map.Entry<String, String> entry : mClsConfigOptions.getTag().entrySet()) {
+                        logGroupBuilder.addLogTags(Logs.LogTag.newBuilder().setKey(entry.getKey()).setValue(entry.getValue()));
+                    }
+                    // 内容压缩
                     compressedData = LZ4Encoder.compressToLhLz4Chunk(grpList.addLogGroupList(logGroupBuilder).build().toByteArray());
                 } catch (Exception e) {
                     throw new InvalidDataException(e.getMessage());
@@ -258,6 +271,7 @@ public class EventMessages {
                     }
                     CLSLog.i(TAG, String.format(Locale.CHINA, "Events flushed. [left = %d]", count));
                 } else {
+                    BATCH_ID.decrementAndGet();
                     count = 0;
                 }
             }
