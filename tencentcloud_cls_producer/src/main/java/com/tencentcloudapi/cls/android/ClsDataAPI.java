@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Base64;
 
+import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
 import com.tencentcloudapi.cls.android.plugin.IPlugin;
 import com.tencentcloudapi.cls.android.producer.EventMessages;
 import com.tencentcloudapi.cls.android.producer.TrackTaskManager;
@@ -16,14 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClsDataAPI {
     protected static final Map<Context, ClsDataAPI> sInstanceMap = new ConcurrentHashMap<>();
-    private static final AtomicInteger INSTANCE_ID_GENERATOR = new AtomicInteger(0);
     protected static ClsConfigOptions mClsConfigOptions;
     private EventMessages mMessages;
-
     protected TrackTaskManager mTrackTaskManager;
     protected TrackTaskManagerThread mTrackTaskManagerThread;
 
@@ -73,7 +71,7 @@ public class ClsDataAPI {
         mTrackTaskManagerThread = new TrackTaskManagerThread();
 
         if (TextUtils.isEmpty(mClsConfigOptions.getAppName()) || Objects.equals(mClsConfigOptions.getAppName(), "--")) {
-            mClsConfigOptions.setAppName(AppUtils.getAppVersion(context));
+            mClsConfigOptions.setAppName(AppUtils.getAppName(context));
         }
 
         if (TextUtils.isEmpty(mClsConfigOptions.getAppVersion()) || Objects.equals(mClsConfigOptions.getAppVersion(), "--")) {
@@ -106,8 +104,17 @@ public class ClsDataAPI {
         }
     }
 
-    public void trackLog(LogItem logItem) {
+    public void trackLog(LogItem logItem) throws InvalidDataException {
         try {
+            if (logItem == null) {
+                throw new InvalidDataException("logItem must not be null");
+            }
+            if (logItem.GetTime() <= 0) {
+                throw new InvalidDataException("logItem time must be valid");
+            }
+            if (logItem.mContents.getContentsCount() <= 0) {
+                throw new InvalidDataException("logItem contents must not be empty");
+            }
             String data = Base64.encodeToString(logItem.mContents.build().toByteArray(), Base64.DEFAULT);
             mTrackTaskManager.addTrackEventTask(new Runnable() {
                 @Override
@@ -123,9 +130,12 @@ public class ClsDataAPI {
                     }
                 }
             });
-
+        } catch (InvalidDataException e) {
+            CLSLog.i("trackLog", e.getMessage());
+            throw e;
         } catch (Exception e) {
             CLSLog.printStackTrace(e);
+            throw e;
         }
     }
 
@@ -138,8 +148,6 @@ public class ClsDataAPI {
         });
     }
 
-
-
     public void stopTrackThread() {
         if (mTrackTaskManagerThread != null && !mTrackTaskManagerThread.isStopped()) {
             mTrackTaskManagerThread.stop();
@@ -147,12 +155,12 @@ public class ClsDataAPI {
         }
     }
 
-    public void close() {
-        stopTrackThread();
-        if (mMessages!=null && !mMessages.isStopped()){
-            mMessages.stop();
-        }
-    }
+//    public void close() {
+//        stopTrackThread();
+//        if (mMessages!=null && !mMessages.isStopped()){
+//            mMessages.stop();
+//        }
+//    }
 
     public void deleteAll() {
         mTrackTaskManager.addTrackEventTask(new Runnable() {
@@ -171,6 +179,14 @@ public class ClsDataAPI {
         }
         this.plugins.add(plugin);
         return this;
+    }
+
+    public void startPlugin(Context context) {
+        for (IPlugin plugin : plugins) {
+            CLSLog.v("ClsDataAPI", CLSLog.format("init plugin %s, version %s start.", plugin.name(), plugin.version()));
+            plugin.init(context, mClsConfigOptions);
+            CLSLog.v("ClsDataAPI", CLSLog.format("init plugin %s, version %s end.", plugin.name(), plugin.version()));
+        }
     }
 
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CLSNetDiagnosisPlugin extends AbstractPlugin {
@@ -17,12 +18,27 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
 
     @Override
     public String version() {
-        return "1.0.15";
+        return "2.0.0";
+    }
+
+    Map<String, String> ext = new LinkedHashMap<>();
+    Map<String, String> getExt() {
+        return ext;
     }
 
     @Override
-    public void init(Context context, ClsConfigOptions config, Map<String, String> ext) {
-        CLSNetDiagnosis.getInstance().init(context, config, ext);
+    public void addCustomField(String key, String value) {
+        if (null == key) {
+            key = "null";
+        }
+        if(null == value) {
+            value = "null";
+        }
+        ext.put(key, value);
+    }
+    @Override
+    public void init(Context context, ClsConfigOptions config) {
+        CLSNetDiagnosis.getInstance().init(context, config, getExt());
     }
 }
 

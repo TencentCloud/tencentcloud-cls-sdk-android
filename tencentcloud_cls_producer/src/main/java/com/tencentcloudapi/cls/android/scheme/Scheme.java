@@ -196,8 +196,9 @@ public class Scheme {
         return scheme;
     }
 
-    public static Scheme createDefaultScheme(Context context, ClsConfigOptions config) {
+    public static Scheme createDefaultScheme(Context context, ClsConfigOptions config, Map<String, String> ext) {
         Scheme scheme = createDefaultScheme(context);
+        scheme.ext = ext;
         return scheme;
     }
 }

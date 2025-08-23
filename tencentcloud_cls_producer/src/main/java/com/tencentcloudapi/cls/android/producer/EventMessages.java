@@ -206,16 +206,17 @@ public class EventMessages {
                 headParameter.put(Constants.CONST_HOST, mClsConfigOptions.getHost());
                 HashMap<String, String> urlParameter = new HashMap<>(1);
                 urlParameter.put(Constants.TOPIC_ID, mClsConfigOptions.getTopicId());
-                // 构造签名
-                String signature = QcloudClsSignature.buildSignature(
-                        mClsConfigOptions.getCredential().getSecretId(),
-                        mClsConfigOptions.getCredential().getSecretKey(),
-                        HttpMethod.POST.toString(),
-                        Constants.UPLOAD_LOG_RESOURCE_URI,
-                        urlParameter, headParameter,
-                        300000);
-                // 追加请求头
-                headParameter.put(Constants.CONST_AUTHORIZATION, signature);
+                if (mClsConfigOptions.getCredential().getSecretId() != null && !mClsConfigOptions.getCredential().getSecretId().isEmpty()) {
+                    // 构造签名
+                    String signature = QcloudClsSignature.buildSignature(
+                            mClsConfigOptions.getCredential().getSecretId(),
+                            mClsConfigOptions.getCredential().getSecretKey(),
+                            HttpMethod.POST.toString(),
+                            Constants.UPLOAD_LOG_RESOURCE_URI,
+                            urlParameter, headParameter,
+                            300000);
+                    headParameter.put(Constants.CONST_AUTHORIZATION, signature);
+                }
                 headParameter.put("x-cls-compress-type", "lz4");
                 headParameter.put("x-cls-add-source", "1");
                 if (!mClsConfigOptions.getCredential().getToken().isEmpty()) {

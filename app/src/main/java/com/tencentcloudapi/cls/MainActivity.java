@@ -6,10 +6,18 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.StrictMode;
 
+import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.Credential;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.ClsDataAPI;
+import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
+import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosis;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetDiagnosisPlugin;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -24,55 +32,52 @@ public class MainActivity extends AppCompatActivity {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
-//        Map<String, String> customFiled = new LinkedHashMap<>();
-//        customFiled.put("cls","custom field");
-//        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
-//            @Override
-//            public void write(String line) {
-//                System.out.println(line);
-//            }
-//        }, new CLSNetDiagnosis.Callback() {
-//            @Override
-//            public void onComplete(String result) {
-//                // result为探测结果，JSON格式。
-//                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
-//            }
-//        }, customFiled);
-//
-//        String SA_SERVER_URL = "数据接收地址";
-//
-//        // 初始化配置
+        clsNetDiagnosis();
+        sendLog(this);
+    }
+
+
+    public void singletonInit(Context context) {
         ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
                 "ap-guangzhou-open.cls.tencentcs.com",
                 "1",
                 new Credential("", ""));
         clsConfigOptions.enableLog(true);
-        ClsDataAPI.startWithConfigOptions(this, clsConfigOptions);
+        ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
+        // 添加插件，自定义插件上报CLS内容
+        AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();
+        clsNetDiagnosisPlugin.addCustomField("test", "tag");
+        ClsDataAPI.sharedInstance(context).
+                addPlugin(clsNetDiagnosisPlugin).
+                startPlugin(context);
+    }
+
+    public void clsNetDiagnosis() {
+        Map<String, String> customFiled = new LinkedHashMap<>();
+        customFiled.put("cls","custom field");
+        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
+            @Override
+            public void write(String line) {
+                System.out.println(line);
+            }
+        }, new CLSNetDiagnosis.Callback() {
+            @Override
+            public void onComplete(String result) {
+                // result为探测结果，JSON格式。
+                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
+            }
+        }, customFiled);
+    }
+
+    public void sendLog(Context context) {
         LogItem logItem = new LogItem();
         logItem.SetTime(System.currentTimeMillis());
         logItem.PushBack("hello", "world");
-        ClsDataAPI.sharedInstance(this).trackLog(logItem);
+        try {
+            ClsDataAPI.sharedInstance(context).trackLog(logItem);
+        } catch (InvalidDataException e) {
+            CLSLog.printStackTrace(e);
+        }
     }
 
-
-    public void singletonInit(Context context) {
-//        ClsConfigOptions clsConfigOptions = new ClsConfigOptions("ap-guangzhou-open.cls.tencentcs.com", "1", new Credential("1", "1"));
-//        ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
-
-
-//        CLSAdapter adapter = CLSAdapter.getInstance();
-//        // 添加网络探测插件
-//        adapter.addPlugin(new CLSNetDiagnosisPlugin());
-//
-//        CLSConfig config = new CLSConfig(context);
-//
-//        config.endpoint = "ap-guangzhou-open.cls.tencentcs.com";
-//        config.accessKeyId = "1";
-//        config.accessKeySecret = "1";
-//        config.pluginAppId = "666233";
-//        config.topicId = "1";
-//        // 发布时，建议关闭，即配置为config.debuggable = false。
-//        config.debuggable = true;
-//        adapter.init(config);
-    }
 }

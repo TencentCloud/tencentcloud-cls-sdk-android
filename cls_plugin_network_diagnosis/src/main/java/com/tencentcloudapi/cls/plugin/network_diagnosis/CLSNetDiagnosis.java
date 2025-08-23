@@ -85,7 +85,9 @@ public class CLSNetDiagnosis {
         this.mConfig = config;
         this.mContext = context;
         if (null != ext && !ext.isEmpty()) {
-            this.ext.putAll(ext);
+            for (Map.Entry<String, String> entry : ext.entrySet()) {
+                this.ext.put( entry.getKey(), entry.getValue());
+            }
         }
         CommandRunner();
     }
@@ -96,12 +98,14 @@ public class CLSNetDiagnosis {
 
     private void report(Type type, String result, Callback callback, Map<String, String> customField) {
         CLSLog.v(TAG, "diagnosis, result: " + result);
-        Scheme scheme = Scheme.createDefaultScheme(mContext, mConfig);
+        Scheme scheme = Scheme.createDefaultScheme(mContext, mConfig, ext);
         if (!TextUtils.isEmpty(scheme.app_id) && scheme.app_id.contains("@")) {
             scheme.app_id = scheme.app_id.substring(0, scheme.app_id.indexOf("@"));
         }
-        if (!this.ext.isEmpty()) {
-            scheme.ext.putAll(customField);
+        if (!customField.isEmpty()) {
+            for (Map.Entry<String, String> entry : customField.entrySet()) {
+                scheme.ext.put( entry.getKey(), entry.getValue());
+            }
         }
         scheme.result = result;
         if (type == Type.PING) {
@@ -122,8 +126,11 @@ public class CLSNetDiagnosis {
         for (Map.Entry<String,String> entry : scheme.toMap().entrySet()) {
             logItem.PushBack(new LogContent(entry.getKey(), entry.getValue()));
         }
-        ClsDataAPI.sharedInstance(this.mContext).trackLog(logItem);
-
+        try {
+            ClsDataAPI.sharedInstance(this.mContext).trackLog(logItem);
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+        }
         if (null != callback) {
             handler.post(() -> callback.onComplete(result));
         }

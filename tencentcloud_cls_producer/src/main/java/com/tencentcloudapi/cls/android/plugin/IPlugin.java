@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -16,5 +17,7 @@ public interface IPlugin {
 
     String version();
 
-    void init(Context context, ClsConfigOptions config, Map<String, String> ext);
+    void init(Context context, ClsConfigOptions config);
+
+    void addCustomField(String key, String value);
 }
