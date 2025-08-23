@@ -11,7 +11,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.text.TextUtils;
-import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
 
 /**
  * Define the scheme of collection data.
@@ -150,7 +150,6 @@ public class Scheme {
         if (TextUtils.isEmpty(value)) {
             return "-";
         }
-
         return value;
     }
 
@@ -158,7 +157,6 @@ public class Scheme {
         if(TextUtils.isEmpty(value)) {
             return;
         }
-
         maps.put(key, value);
     }
 
@@ -187,10 +185,7 @@ public class Scheme {
         scheme.app_name = returnDashIfNull(AppUtils.getAppName(context));
         scheme.app_version = returnDashIfNull(AppUtils.getAppVersion(context));
         scheme.utdid = returnDashIfNull(DeviceUtils.getUtdid(context));
-//        scheme.imei = returnDashIfNull(DeviceUtils.getImei(context));
-//        scheme.imsi = returnDashIfNull(DeviceUtils.getImsi(context));
         scheme.brand = returnDashIfNull(Build.BRAND);
-//        scheme.device_model = returnDashIfNull(Build.MODEL);
         scheme.os = "Android";
         scheme.os_version = returnDashIfNull(VERSION.RELEASE);
         scheme.carrier = returnDashIfNull(DeviceUtils.getCarrier(context));
@@ -198,23 +193,11 @@ public class Scheme {
         scheme.access_subtype = returnDashIfNull(DeviceUtils.getAccessSubTypeName(context));
         scheme.root = returnDashIfNull(RootUtil.isDeviceRooted() + "");
         scheme.dns = returnDashIfNull(DeviceUtils.getDns(context));
-//        scheme.resolution = returnDashIfNull(DeviceUtils.getResolution(context));
-
         return scheme;
     }
 
-    public static Scheme createDefaultScheme(CLSConfig config) {
-        Scheme scheme = createDefaultScheme(config.context);
-        scheme.app_id = String.format("%s@Android", config.pluginAppId);
-        scheme.channel = returnDashIfNull(config.channel);
-        scheme.channel_name = returnDashIfNull(config.channelName);
-        scheme.user_nick = returnDashIfNull(config.userNick);
-        scheme.long_login_nick = returnDashIfNull(config.longLoginNick);
-        scheme.user_id = returnDashIfNull(config.userId);
-        scheme.long_login_user_id = returnDashIfNull(config.longLoginUserId);
-        scheme.logon_type = returnDashIfNull(config.loginType);
-        scheme.ext = config.getExt();
-
+    public static Scheme createDefaultScheme(Context context, ClsConfigOptions config) {
+        Scheme scheme = createDefaultScheme(context);
         return scheme;
     }
 }

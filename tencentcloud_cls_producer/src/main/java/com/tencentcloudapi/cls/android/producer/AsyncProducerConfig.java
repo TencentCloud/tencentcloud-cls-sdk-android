@@ -90,6 +90,9 @@ public class AsyncProducerConfig {
         if (null == this.secretToken || this.secretToken.isEmpty()) {
             this.secretToken = "";
         }
+
+
+
     }
 
 

@@ -1,10 +1,20 @@
-package com.tencentcloudapi.cls.android.producer;
+package com.tencentcloudapi.cls.android;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Base64;
-import com.tencentcloudapi.cls.android.CLSLog;
+
+import com.tencentcloudapi.cls.android.plugin.IPlugin;
+import com.tencentcloudapi.cls.android.producer.EventMessages;
+import com.tencentcloudapi.cls.android.producer.TrackTaskManager;
+import com.tencentcloudapi.cls.android.producer.TrackTaskManagerThread;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
+import com.tencentcloudapi.cls.android.scheme.AppUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,6 +71,14 @@ public class ClsDataAPI {
         this.mMessages.flushScheduled();
         mTrackTaskManager = TrackTaskManager.getInstance();
         mTrackTaskManagerThread = new TrackTaskManagerThread();
+
+        if (TextUtils.isEmpty(mClsConfigOptions.getAppName()) || Objects.equals(mClsConfigOptions.getAppName(), "--")) {
+            mClsConfigOptions.setAppName(AppUtils.getAppVersion(context));
+        }
+
+        if (TextUtils.isEmpty(mClsConfigOptions.getAppVersion()) || Objects.equals(mClsConfigOptions.getAppVersion(), "--")) {
+            mClsConfigOptions.setAppVersion(AppUtils.getAppVersion(context));
+        }
         new Thread(mTrackTaskManagerThread, "CLS.TaskQueueThread").start();
     }
 
@@ -143,6 +161,16 @@ public class ClsDataAPI {
                 mMessages.deleteAll();
             }
         });
+    }
+
+    private List<IPlugin> plugins = new ArrayList<>();
+
+    public ClsDataAPI addPlugin(IPlugin plugin) {
+        if (null == plugin) {
+            throw new IllegalArgumentException("plugin must not be null");
+        }
+        this.plugins.add(plugin);
+        return this;
     }
 
 }

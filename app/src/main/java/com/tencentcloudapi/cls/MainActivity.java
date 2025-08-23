@@ -6,10 +6,9 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.StrictMode;
 
-import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.Credential;
-import com.tencentcloudapi.cls.android.producer.ClsConfigOptions;
-import com.tencentcloudapi.cls.android.producer.ClsDataAPI;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
+import com.tencentcloudapi.cls.android.ClsDataAPI;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
 
 

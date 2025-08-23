@@ -8,12 +8,10 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import com.tencentcloudapi.cls.android.CLSLog;
-import com.tencentcloudapi.cls.android.producer.ClsDataAPI;
-import com.tencentcloudapi.cls.android.producer.common.Constants;
+import com.tencentcloudapi.cls.android.ClsDataAPI;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;

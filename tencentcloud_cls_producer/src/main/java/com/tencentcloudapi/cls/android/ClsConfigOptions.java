@@ -1,9 +1,10 @@
-package com.tencentcloudapi.cls.android.producer;
+package com.tencentcloudapi.cls.android;
 
-import com.tencentcloudapi.cls.android.CLSLog;
-import com.tencentcloudapi.cls.android.Credential;
 import com.tencentcloudapi.cls.android.producer.util.Args;
 import com.tencentcloudapi.cls.android.producer.util.NetworkType;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ClsConfigOptions {
     /**
@@ -140,5 +141,39 @@ public class ClsConfigOptions {
             this.host = endpoint;
             this.endpoint = "https://" + endpoint;
         }
+    }
+
+    private String appVersion = "--";
+    private String appName = "--";
+//    private Map<String, String> tag = new LinkedHashMap<>();
+//    public void addTag(String key, String value) {
+//        if (null == key) {
+//            key = "null";
+//        }
+//        if(null == value) {
+//            value = "null";
+//        }
+//        tag.put(key, value);
+//    }
+//    public Map<String, String> getTag() {
+//        return tag;
+//    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public ClsConfigOptions setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+        return this;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public ClsConfigOptions setAppName(String appName) {
+        this.appName = appName;
+        return this;
     }
 }

@@ -2,7 +2,6 @@ package com.tencentcloudapi.cls.android.producer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -10,8 +9,8 @@ import android.os.Message;
 import android.text.TextUtils;
 
 import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.exceptions.ConnectErrorException;
-import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
 import com.tencentcloudapi.cls.android.exceptions.ResponseErrorException;
 import com.tencentcloudapi.cls.android.producer.common.Constants;
 import com.tencentcloudapi.cls.android.producer.common.LogException;
@@ -156,7 +155,7 @@ public class EventMessages {
         }
     }
 
-    void deleteAll() {
+    public void deleteAll() {
         try {
             final Message m = Message.obtain();
             m.what = DELETE_ALL;
