@@ -88,6 +88,7 @@ public final class NetworkUtils {
                 }
             }
         } catch (SocketException ex) {
+            CLSLog.printStackTrace(ex);
             // swallow it
         }
         return null;
