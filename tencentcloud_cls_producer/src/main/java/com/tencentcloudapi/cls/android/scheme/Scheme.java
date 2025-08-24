@@ -186,8 +186,8 @@ public class Scheme {
         scheme.app_name = returnDashIfNull(AppUtils.getAppName(context));
         scheme.app_version = returnDashIfNull(AppUtils.getAppVersion(context));
         scheme.utdid = returnDashIfNull(DeviceUtils.getUtdid(context));
-        scheme.brand = returnDashIfNull(Build.BRAND);
-        scheme.os = "Android";
+        scheme.brand = returnDashIfNull(DeviceUtils.getBrand());
+        scheme.os = returnDashIfNull(DeviceUtils.getOS());
         scheme.os_version = returnDashIfNull(VERSION.RELEASE);
         scheme.carrier = returnDashIfNull(DeviceUtils.getCarrier(context));
         scheme.network_type = returnDashIfNull(NetworkUtils.networkType(context));
