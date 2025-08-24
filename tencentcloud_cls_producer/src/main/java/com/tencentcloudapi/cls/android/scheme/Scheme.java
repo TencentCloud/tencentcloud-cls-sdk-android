@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.text.TextUtils;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
+import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
 
 /**
  * Define the scheme of collection data.
@@ -189,8 +190,12 @@ public class Scheme {
         scheme.os = "Android";
         scheme.os_version = returnDashIfNull(VERSION.RELEASE);
         scheme.carrier = returnDashIfNull(DeviceUtils.getCarrier(context));
-        scheme.access = returnDashIfNull(DeviceUtils.getAccessName(context));
-        scheme.access_subtype = returnDashIfNull(DeviceUtils.getAccessSubTypeName(context));
+        scheme.network_type = returnDashIfNull(NetworkUtils.networkType(context));
+        if ("WIFI".equals(scheme.network_type)) {
+            scheme.network_type = "Wi-Fi";
+        } else if (TextUtils.isEmpty(scheme.network_type)) {
+            scheme.network_type = "Unknown";
+        }
         scheme.root = returnDashIfNull(RootUtil.isDeviceRooted() + "");
         scheme.dns = returnDashIfNull(DeviceUtils.getDns(context));
         return scheme;

@@ -178,6 +178,17 @@ public class EventMessages {
 
     private boolean sendCheck() {
         try {
+            if (TextUtils.isEmpty(mClsConfigOptions.getEndpoint())) {
+                CLSLog.i(TAG, "CLS Server endpoint is null or empty.");
+                return false;
+            }
+
+            //不符合同步数据的网络策略
+            String networkType = NetworkUtils.networkType(mContext);
+            if (!NetworkUtils.isShouldFlush(networkType, mClsConfigOptions.getNetworkTypePolicy())) {
+                CLSLog.i(TAG, String.format("Invalid NetworkType = %s", networkType));
+                return false;
+            }
             //无网络
             if (!NetworkUtils.isNetworkAvailable(mContext)) {
                 return false;

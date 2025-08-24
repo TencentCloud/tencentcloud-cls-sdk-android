@@ -67,6 +67,10 @@ public class ClsConfigOptions {
         return this;
     }
 
+    public int getNetworkTypePolicy() {
+        return mNetworkTypePolicy;
+    }
+
     /**
      * 是否打印日志
      *
