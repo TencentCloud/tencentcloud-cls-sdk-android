@@ -1,5 +1,6 @@
 package com.tencentcloudapi.cls.android;
 
+import com.tencentcloudapi.cls.android.producer.Callback;
 import com.tencentcloudapi.cls.android.producer.util.Args;
 import com.tencentcloudapi.cls.android.producer.util.NetworkType;
 
@@ -181,5 +182,15 @@ public class ClsConfigOptions {
     public ClsConfigOptions setAppName(String appName) {
         this.appName = appName;
         return this;
+    }
+
+    private TrackLogEventCallBack callback = null;
+    public ClsConfigOptions setCallback(TrackLogEventCallBack callback) {
+        this.callback = callback;
+        return this;
+    }
+
+    public TrackLogEventCallBack getCallback() {
+        return callback;
     }
 }

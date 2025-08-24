@@ -10,6 +10,7 @@ import android.text.TextUtils;
 
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
+import com.tencentcloudapi.cls.android.TrackLogEventCallBack;
 import com.tencentcloudapi.cls.android.exceptions.ConnectErrorException;
 import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
 import com.tencentcloudapi.cls.android.exceptions.ResponseErrorException;
@@ -272,7 +273,14 @@ public class EventMessages {
                 errorMessage = "Exception: " + e.getMessage();
             } finally {
                 if (!TextUtils.isEmpty(errorMessage)) {
+                   if(null != mClsConfigOptions.getCallback()) {
+                       mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.FAIL, errorMessage);
+                   }
                     CLSLog.i(TAG, errorMessage);
+                } else {
+                    if(null != mClsConfigOptions.getCallback()) {
+                        mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.SUCCESS, "success");
+                    }
                 }
                 if (deleteEvents) {
                     try {
