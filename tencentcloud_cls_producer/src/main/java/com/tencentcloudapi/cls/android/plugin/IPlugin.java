@@ -1,6 +1,11 @@
 package com.tencentcloudapi.cls.android.plugin;
 
-import com.tencentcloudapi.cls.android.CLSConfig;
+import android.content.Context;
+
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author farmerx
@@ -12,13 +17,7 @@ public interface IPlugin {
 
     String version();
 
-    void init(CLSConfig config);
+    void init(Context context, ClsConfigOptions config);
 
-    void setDebuggable(boolean debuggable);
-
-    void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken);
-
-    void resetTopicID(String endpoint, String topicId);
-
-    void updateConfig(CLSConfig config);
+    void addCustomField(String key, String value);
 }

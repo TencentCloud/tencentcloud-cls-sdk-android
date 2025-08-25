@@ -1,10 +1,12 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis;
 
+import android.content.Context;
 
-import com.tencentcloudapi.cls.android.CLSConfig;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
-import com.tencentcloudapi.cls.android.plugin.ISender;
-import com.tencentcloudapi.cls.plugin.network_diagnosis.sender.CLSNetDataSender;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CLSNetDiagnosisPlugin extends AbstractPlugin {
     private static final String TAG = "CLSNetDiagnosisPlugin";
@@ -16,25 +18,27 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
 
     @Override
     public String version() {
-        return "1.0.15";
+        return "2.0.0";
+    }
+
+    Map<String, String> ext = new LinkedHashMap<>();
+    Map<String, String> getExt() {
+        return ext;
     }
 
     @Override
-    public void init(CLSConfig config) {
-        ISender sender = new CLSNetDataSender();
-        sender.init(config);
-        CLSNetDiagnosis.getInstance().init(config, sender);
+    public void addCustomField(String key, String value) {
+        if (null == key) {
+            key = "null";
+        }
+        if(null == value) {
+            value = "null";
+        }
+        ext.put(key, value);
     }
-
     @Override
-    public void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
-        CLSNetDiagnosis.getInstance().resetSecurityToken(accessKeyId, accessKeySecret, securityToken);
+    public void init(Context context, ClsConfigOptions config) {
+        CLSNetDiagnosis.getInstance().init(context, config, getExt());
     }
-
-    @Override
-    public void resetTopicID(String endpoint, String topicId) {
-        CLSNetDiagnosis.getInstance().resetTopicID(endpoint, topicId);
-    }
-
 }
 

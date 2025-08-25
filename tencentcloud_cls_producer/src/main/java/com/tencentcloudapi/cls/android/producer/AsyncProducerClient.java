@@ -1,5 +1,6 @@
 package com.tencentcloudapi.cls.android.producer;
 
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +39,8 @@ public class AsyncProducerClient {
     private final BatchHandler failureBatchHandler;
 
     private final AtomicInteger batchCount = new AtomicInteger(0);
+
+    private EventMessages mMessages;
 
     /**
      * 获取配置文件

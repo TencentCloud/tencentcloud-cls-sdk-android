@@ -65,7 +65,6 @@ public final class Utils {
         if (ip == null) {
             ip = "127.0.0.1";
         }
-
         String name = "cls-producer"+String.valueOf(new Date().getTime()) ;
         String input = ip + "-" + name + "-" + instanceId;
         return Hashing.farmHashFingerprint64().hashString(input, Charsets.US_ASCII).toString();

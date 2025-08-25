@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -23,6 +24,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.utdid.Utdid;
@@ -34,6 +36,8 @@ import com.tencentcloudapi.cls.android.utdid.Utdid;
  * @date 2022/03/10
  */
 class DeviceUtils {
+
+    public static final String COMMAND_HARMONYOS_VERSION = "getprop hw_sc.build.platform.version";
     private static final String TAG = "DeviceUtils";
 
     public static final String NETWORK_CLASS_WIFI = "Wi-Fi";
@@ -322,5 +326,111 @@ class DeviceUtils {
             e.printStackTrace();
         }
         return dnsServers.isEmpty() ? new String[0] : dnsServers.toArray(new String[dnsServers.size()]);
+    }
+
+    public static String getOS() {
+        return Build.VERSION.RELEASE == null ? "Unknown" : Build.VERSION.RELEASE;
+    }
+
+    public static String getBrand() {
+        try {
+            String brand = Build.BRAND;
+            if (brand != null) {
+                return brand.trim().toUpperCase();
+            }
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+        }
+        return "Unknown";
+    }
+
+    /**
+     * 获取鸿蒙系统 Version
+     *
+     * @return HarmonyOS Version
+     */
+    public static String getHarmonyOSVersion() {
+        String version = null;
+        if (isHarmonyOs()) {
+            version = getProp("hw_sc.build.platform.version", "");
+            if (TextUtils.isEmpty(version)) {
+                version = exec(COMMAND_HARMONYOS_VERSION);
+            }
+        }
+        return version;
+    }
+
+    /**
+     * 判断当前是否为鸿蒙系统
+     *
+     * @return 是否是鸿蒙系统，是：true，不是：false
+     */
+    private static boolean isHarmonyOs() {
+        try {
+            Class<?> buildExClass = Class.forName("com.huawei.system.BuildEx");
+            Object osBrand = buildExClass.getMethod("getOsBrand").invoke(buildExClass);
+            if (osBrand == null) {
+                return false;
+            }
+            return "harmony".equalsIgnoreCase(osBrand.toString());
+        } catch (Throwable e) {
+            CLSLog.i("CLS.HasHarmonyOS", e.getMessage());
+            return false;
+        }
+    }
+
+    private static String getProp(String property, String defaultValue) {
+        try {
+            Class spClz = Class.forName("android.os.SystemProperties");
+            Method method = spClz.getDeclaredMethod("get", String.class);
+            String value = (String) method.invoke(spClz, property);
+            if (TextUtils.isEmpty(value)) {
+                return defaultValue;
+            }
+            return value;
+        } catch (Throwable throwable) {
+            CLSLog.i("CLS.SystemProperties", throwable.getMessage());
+        }
+        return defaultValue;
+    }
+
+    /**
+     * 执行命令获取对应内容
+     *
+     * @param command 命令
+     * @return 命令返回内容
+     */
+    public static String exec(String command) {
+        InputStreamReader ir = null;
+        BufferedReader input = null;
+        try {
+            Process process = Runtime.getRuntime().exec(command);
+            ir = new InputStreamReader(process.getInputStream());
+            input = new BufferedReader(ir);
+            String line;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((line = input.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            return stringBuilder.toString();
+        } catch (Throwable e) {
+            CLSLog.i("CLS.Exec", e.getMessage());
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (Throwable e) {
+                    CLSLog.i("CLS.Exec", e.getMessage());
+                }
+            }
+            if (ir != null) {
+                try {
+                    ir.close();
+                } catch (IOException e) {
+                    CLSLog.i("CLS.Exec", e.getMessage());
+                }
+            }
+        }
+        return null;
     }
 }

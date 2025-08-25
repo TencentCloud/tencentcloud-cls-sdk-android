@@ -100,7 +100,7 @@ public class QcloudClsSignature {
         String qUrlParamListStr = buildSignMemberStr(sortedParams);
         String qKeyTimeStr, qSignTimeStr;
         qKeyTimeStr = qSignTimeStr = buildTimeStr(expireMillsecond);
-        String signKey = DigestUtils.hamcSha1( qKeyTimeStr.getBytes(), secretKey.getBytes());
+        String signKey = DigestUtils.hamcSha1(qKeyTimeStr.getBytes(), secretKey.getBytes());
         String formatMethod = method.toLowerCase();
         String formatParameters = formatMapToStr(sortedParams);
         String formatHeaders = formatMapToStr(sortedSignHeaders);

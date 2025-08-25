@@ -1,21 +1,24 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import org.json.JSONObject;
-import com.tencentcloudapi.cls.android.CLSConfig;
 import com.tencentcloudapi.cls.android.CLSLog;
-import com.tencentcloudapi.cls.android.JsonUtil;
-import com.tencentcloudapi.cls.android.plugin.ISender;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
+import com.tencentcloudapi.cls.android.ClsDataAPI;
+import com.tencentcloudapi.cls.android.producer.common.LogContent;
+import com.tencentcloudapi.cls.android.producer.common.LogItem;
+import com.tencentcloudapi.cls.android.producer.errors.ProducerException;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.CommandRunner;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.netanalysis.net.traceroute.Traceroute;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Diagnosis;
 import com.tencentcloudapi.cls.android.scheme.Scheme;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CLSNetDiagnosis {
@@ -41,9 +44,13 @@ public class CLSNetDiagnosis {
     public void CommandRunner() {
         CommandRunner.start();
     }
+    private ClsConfigOptions mConfig;
+    private Context mContext;
 
-    private ISender sender;
-    private CLSConfig config;
+    private Map<String, String> ext = new LinkedHashMap<>();
+    public Map<String, String> getExt() {
+        return ext;
+    }
     private final TaskIdGenerator taskIdGenerator = new TaskIdGenerator();
     private final Handler handler;
 
@@ -74,49 +81,32 @@ public class CLSNetDiagnosis {
         return Holder.INSTANCE;
     }
 
-    void init(CLSConfig config, ISender sender) {
-        this.config = config;
-        this.sender = sender;
+    void init(Context context, ClsConfigOptions config, Map<String, String> ext) {
+        this.mConfig = config;
+        this.mContext = context;
+        if (null != ext && !ext.isEmpty()) {
+            for (Map.Entry<String, String> entry : ext.entrySet()) {
+                this.ext.put( entry.getKey(), entry.getValue());
+            }
+        }
         CommandRunner();
     }
-
-    /**
-     * @param accessKeyId
-     * @param accessKeySecret
-     * @param securityToken
-     */
-    void resetSecurityToken(String accessKeyId, String accessKeySecret, String securityToken) {
-        this.sender.resetSecurityToken(accessKeyId, accessKeySecret, securityToken);
-    }
-
-    /**
-     * @param endpoint
-     * @param topicId
-     */
-     void resetTopicID(String endpoint, String topicId) {
-         this.sender.resetTopicID(endpoint, topicId);
-    }
-
 
     private CLSNetDiagnosis() {
         handler = new Handler(Looper.getMainLooper());
     }
 
     private void report(Type type, String result, Callback callback, Map<String, String> customField) {
-        if (config.debuggable) {
-            CLSLog.v(TAG, "diagnosis, result: " + result);
-        }
-        Scheme scheme = Scheme.createDefaultScheme(config);
+        CLSLog.v(TAG, "diagnosis, result: " + result);
+        Scheme scheme = Scheme.createDefaultScheme(mContext, mConfig, ext);
         if (!TextUtils.isEmpty(scheme.app_id) && scheme.app_id.contains("@")) {
             scheme.app_id = scheme.app_id.substring(0, scheme.app_id.indexOf("@"));
         }
-
-        if (null != customField && !customField.isEmpty()) {
+        if (!customField.isEmpty()) {
             for (Map.Entry<String, String> entry : customField.entrySet()) {
                 scheme.ext.put( entry.getKey(), entry.getValue());
             }
         }
-
         scheme.result = result;
         if (type == Type.PING) {
             scheme.method = "PING";
@@ -131,8 +121,16 @@ public class CLSNetDiagnosis {
         }else {
             scheme.method = "UNKNOWN";
         }
-        sender.send(scheme);
-
+        int ts = (int) (System.currentTimeMillis() / 1000);
+        LogItem logItem = new LogItem(ts);
+        for (Map.Entry<String,String> entry : scheme.toMap().entrySet()) {
+            logItem.PushBack(new LogContent(entry.getKey(), entry.getValue()));
+        }
+        try {
+            ClsDataAPI.sharedInstance(this.mContext).trackLog(logItem);
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+        }
         if (null != callback) {
             handler.post(() -> callback.onComplete(result));
         }
