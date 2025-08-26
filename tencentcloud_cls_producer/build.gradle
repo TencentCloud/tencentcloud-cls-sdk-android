@@ -71,13 +71,13 @@ jreleaser {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     namespace "com.tencentcloudapi.cls.android"
 
     defaultConfig {
         minSdk 19
-        targetSdk 31
+        targetSdk 33
         versionCode 1
         versionName "2.0.0"
 
@@ -107,4 +107,5 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-java:3.25.5'
     implementation 'com.google.protobuf:protobuf-java-util:3.25.5'
     implementation 'org.lz4:lz4-java:1.8.0'
+    testImplementation 'junit:junit:4.+'
 }

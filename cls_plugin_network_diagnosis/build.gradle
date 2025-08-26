@@ -71,13 +71,13 @@ jreleaser {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     namespace "com.tencentcloudapi.cls.plugin.network_diagnosis"
 
     defaultConfig {
         minSdk 19
-        targetSdk 31
+        targetSdk 33
         versionCode 1
         versionName "2.0.0"
 
@@ -108,4 +108,5 @@ dependencies {
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'com.squareup.okhttp3:okhttp:3.14.2'
     implementation 'com.squareup.okio:okio:1.17.4'
+    testImplementation 'junit:junit:4.+'
 }
