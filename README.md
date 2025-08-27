@@ -52,23 +52,6 @@ public class MainActivity extends AppCompatActivity {
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
     }
 
-    public void clsNetDiagnosis() {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls","custom field");
-        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
-            }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
-            }
-        }, customFiled);
-    }
-
     public void sendLog(Context context) {
         LogItem logItem = new LogItem();
         logItem.SetTime(System.currentTimeMillis());
