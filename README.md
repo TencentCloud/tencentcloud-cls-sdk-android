@@ -50,12 +50,6 @@ public class MainActivity extends AppCompatActivity {
                 new Credential("", ""));
         clsConfigOptions.enableLog(true);
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
-        // 添加插件，自定义插件上报CLS内容
-        AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();
-        clsNetDiagnosisPlugin.addCustomField("test", "tag");
-        ClsDataAPI.sharedInstance(context).
-                addPlugin(clsNetDiagnosisPlugin).
-                startPlugin(context);
     }
 
     public void clsNetDiagnosis() {
