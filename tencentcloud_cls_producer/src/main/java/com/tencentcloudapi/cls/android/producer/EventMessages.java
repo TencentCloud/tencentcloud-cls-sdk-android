@@ -249,7 +249,7 @@ public class EventMessages {
                             HttpMethod.POST.toString(),
                             Constants.UPLOAD_LOG_RESOURCE_URI,
                             urlParameter, headParameter,
-                            300000);
+                            86400000);
                     headParameter.put(Constants.CONST_AUTHORIZATION, signature);
                 }
                 headParameter.put("x-cls-compress-type", "lz4");
