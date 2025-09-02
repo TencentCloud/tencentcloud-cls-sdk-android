@@ -10,6 +10,7 @@ import com.tencentcloudapi.cls.android.producer.EventMessages;
 import com.tencentcloudapi.cls.android.producer.TrackTaskManager;
 import com.tencentcloudapi.cls.android.producer.TrackTaskManagerThread;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
+import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
 import com.tencentcloudapi.cls.android.scheme.AppUtils;
 
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ public class ClsDataAPI {
             mClsConfigOptions.setAppVersion(AppUtils.getAppVersion(context));
         }
         new Thread(mTrackTaskManagerThread, "CLS.TaskQueueThread").start();
+        delayInitTask(context);
     }
 
     /**
@@ -187,6 +189,40 @@ public class ClsDataAPI {
             plugin.init(context, mClsConfigOptions);
             CLSLog.v("ClsDataAPI", CLSLog.format("init plugin %s, version %s end.", plugin.name(), plugin.version()));
         }
+    }
+
+    /**
+     * 延迟初始化任务
+     */
+    protected void delayInitTask(final Context context) {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    registerNetworkListener(context);
+                } catch (Exception ex) {
+                    CLSLog.printStackTrace(ex);
+                }
+            }
+        });
+    }
+
+    void registerNetworkListener(final Context context) {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
+            @Override
+            public void run() {
+                NetworkUtils.registerNetworkListener(context);
+            }
+        });
+    }
+
+    void unregisterNetworkListener(final Context context) {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
+            @Override
+            public void run() {
+                NetworkUtils.unregisterNetworkListener(context);
+            }
+        });
     }
 
 }

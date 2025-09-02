@@ -2,11 +2,16 @@ package com.tencentcloudapi.cls.android.producer.util;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -30,6 +35,9 @@ public final class NetworkUtils {
      * 缓存的网络状态
      */
     private static String networkType;
+
+    private static CLSBroadcastReceiver mReceiver;
+    private static CLSNetworkCallbackImpl networkCallback;
     private NetworkUtils() {
     }
 
@@ -130,7 +138,7 @@ public final class NetworkUtils {
      */
     public static String networkType(Context context) {
         try {
-            //小米特殊机型冷启动时获取不到 Network，为 NULL 字符串时需要重新尝试获取
+            // 小米特殊机型冷启动时获取不到 Network，为 NULL 字符串时需要重新尝试获取
             if (!TextUtils.isEmpty(networkType) && !"NULL".equals(networkType)) {
                 return networkType;
             }
@@ -249,6 +257,102 @@ public final class NetworkUtils {
                 return "5G";
         }
         return "NULL";
+    }
+
+    public static void registerNetworkListener(Context context) {
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                if (mReceiver == null) {
+                    mReceiver = new CLSBroadcastReceiver();
+                }
+                IntentFilter intentFilter = new IntentFilter();
+                intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+                context.registerReceiver(mReceiver, intentFilter);
+                CLSLog.i("CLSNetwork", "Register BroadcastReceiver");
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        !PermissionUtils.checkSelfPermission(context, Manifest.permission.ACCESS_NETWORK_STATE)) {
+                    return;
+                }
+                if (networkCallback == null) {
+                    networkCallback = new CLSNetworkCallbackImpl();
+                }
+                NetworkRequest request = new NetworkRequest.Builder().build();
+                ConnectivityManager connectivityManager = (ConnectivityManager) context
+                        .getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (connectivityManager != null) {
+                    connectivityManager.registerNetworkCallback(request, networkCallback);
+                    CLSLog.i("CLSNetwork", "Register ConnectivityManager");
+                }
+            }
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+        }
+    }
+
+    public static void unregisterNetworkListener(Context context) {
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                if (mReceiver == null) {
+                    return;
+                }
+                context.unregisterReceiver(mReceiver);
+                CLSLog.i("CLSNetwork", "unregisterReceiver BroadcastReceiver");
+            } else {
+                if (networkCallback == null) {
+                    return;
+                }
+                ConnectivityManager connectivityManager = (ConnectivityManager) context
+                        .getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (connectivityManager != null) {
+                    connectivityManager.unregisterNetworkCallback(networkCallback);
+                    CLSLog.i("CLSNetwork", "unregister ConnectivityManager");
+                }
+            }
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+        }
+    }
+
+    public static void cleanNetworkTypeCache() {
+        networkType = null;
+    }
+
+    private static class CLSBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+                NetworkUtils.cleanNetworkTypeCache();
+                CLSLog.i("CLSNetwork", "CLSBroadcastReceiver is receiving ConnectivityManager.CONNECTIVITY_ACTION broadcast");
+            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private static class CLSNetworkCallbackImpl extends ConnectivityManager.NetworkCallback {
+
+        @Override
+        public void onAvailable(Network network) {
+            super.onAvailable(network);
+            NetworkUtils.cleanNetworkTypeCache();
+            CLSLog.i("CLSNetworkCallback", "onAvailable is calling");
+        }
+
+        @Override
+        public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+            super.onCapabilitiesChanged(network, networkCapabilities);
+            NetworkUtils.cleanNetworkTypeCache();
+            CLSLog.i("CLSNetworkCallback", "onCapabilitiesChanged is calling");
+        }
+
+        @Override
+        public void onLost(Network network) {
+            super.onLost(network);
+            NetworkUtils.cleanNetworkTypeCache();
+            CLSLog.i("CLSNetworkCallback", "onLost is calling");
+        }
     }
 
 
