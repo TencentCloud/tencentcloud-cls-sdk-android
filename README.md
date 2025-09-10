@@ -11,6 +11,23 @@
 
 secretId和secretKey为云API密钥，密钥信息获取请前往[密钥获取](https://console.cloud.tencent.com/cam/capi)。并请确保云API密钥关联的账号具有相应的[SDK上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)
 
+## 参数使用说明
+
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| `endpoint` | `String` | 日志服务CLS endpoint接入域名，如：`ap-guangzhou.cls.tencentcs.com` |
+| `host` | `String` | 主机地址 |
+| `credential` | `Credential` | 认证信息 |
+| `topicId` | `String` | 日志主题ID |
+| `flushInterval` | `int` | 两次数据发送的最小时间间隔，单位毫秒，默认5秒 |
+| `flushBulkSize` | `int` | flush日志的最大条目数，默认50，最大4096 |
+| `maxCacheSize` | `long` | 本地缓存上限值，单位byte，默认32MB |
+| `mLogEnabled` | `boolean` | 是否开启打印日志 |
+| `mNetworkTypePolicy` | `int` | 网络上传策略，支持2G/3G/4G/WIFI/5G |
+| `appVersion` | `String` | 应用版本 |
+| `appName` | `String` | 应用名称 |
+| `tag` | `Map<String, String>` | 标签键值对 |
+| `callback` | `TrackLogEventCallBack` | 回调函数 |
 
 ##
 ```agsl
