@@ -19,6 +19,7 @@ import com.tencentcloudapi.cls.android.producer.common.LogException;
 import com.tencentcloudapi.cls.android.producer.common.Logs;
 import com.tencentcloudapi.cls.android.producer.data.adapter.DbAdapter;
 import com.tencentcloudapi.cls.android.producer.data.adapter.DbParams;
+import com.tencentcloudapi.cls.android.producer.data.adapter.EventData;
 import com.tencentcloudapi.cls.android.producer.http.comm.HttpMethod;
 import com.tencentcloudapi.cls.android.producer.util.LZ4Encoder;
 import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class EventMessages {
@@ -201,97 +203,133 @@ public class EventMessages {
         return true;
     }
 
-    private void sendData(boolean is_instant_event) {
+    private boolean deleteInvalidEvents(JSONArray eventIds, boolean is_instant_event) {
+        int count = 0;
+        boolean isContinue = true;
+        try {
+            count = mDbAdapter.cleanupEvents(eventIds, is_instant_event);
+        } catch (Exception e) {
+            CLSLog.printStackTrace(e);
+            isContinue = false;
+        }
+        CLSLog.i(TAG, String.format(Locale.CHINA, "Events flushed. [left = %d]", count));
+        return isContinue;
+    }
+
+    private boolean sendEvents(String topic, JSONArray eventIds, Logs.LogGroup.Builder logGroupBuilder, boolean is_instant_event) {
+        boolean isContinue = true;
+        boolean deleteEvents = true;
+        String errorMessage = null;
+        try {
+            Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
+            byte[] compressedData;
+            try {
+                logGroupBuilder.setContextFlow(Utils.generatePackageId(producerHash, BATCH_ID));
+                // 增加tag
+                for (Map.Entry<String, String> entry : mClsConfigOptions.getTag().entrySet()) {
+                    logGroupBuilder.addLogTags(Logs.LogTag.newBuilder().setKey(entry.getKey()).setValue(entry.getValue()));
+                }
+                // 内容压缩
+                compressedData = LZ4Encoder.compressToLhLz4Chunk(grpList.addLogGroupList(logGroupBuilder).build().toByteArray());
+                // 构造请求header 头
+            } catch (Exception e) {
+                throw new InvalidDataException(e.getMessage());
+            }
+            HashMap<String, String> headParameter = new HashMap<>(3);
+            headParameter.put(Constants.CONST_CONTENT_LENGTH, String.valueOf(compressedData.length));
+            headParameter.put(Constants.CONST_CONTENT_TYPE, Constants.CONST_PROTO_BUF);
+            headParameter.put(Constants.CONST_HOST, mClsConfigOptions.getHost());
+            HashMap<String, String> urlParameter = new HashMap<>(1);
+            urlParameter.put(Constants.TOPIC_ID, topic);
+            if (mClsConfigOptions.getCredential().getSecretId() != null && !mClsConfigOptions.getCredential().getSecretId().isEmpty()) {
+                // 构造签名
+                String signature = QcloudClsSignature.buildSignature(
+                        mClsConfigOptions.getCredential().getSecretId(),
+                        mClsConfigOptions.getCredential().getSecretKey(),
+                        HttpMethod.POST.toString(),
+                        Constants.UPLOAD_LOG_RESOURCE_URI,
+                        urlParameter, headParameter,
+                        86400000);
+                headParameter.put(Constants.CONST_AUTHORIZATION, signature);
+            }
+            headParameter.put("x-cls-compress-type", "lz4");
+            headParameter.put("x-cls-add-source", "1");
+            if (!mClsConfigOptions.getCredential().getToken().isEmpty()) {
+                headParameter.put("X-Cls-Token", mClsConfigOptions.getCredential().getToken());
+            }
+            headParameter.put("User-Agent", "cls-android-sdk-2.0.0");
+            // do send http reuqest
+            sendHttpRequest(mClsConfigOptions.getEndpoint()+Constants.UPLOAD_LOG_RESOURCE_URI+"?topic_id="+topic, compressedData, headParameter);
+        }catch (ConnectErrorException e) {
+            deleteEvents = false;
+            errorMessage = "Connection error: " + e.getMessage();
+        } catch (InvalidDataException e) {
+            errorMessage = "Invalid data: " + e.getMessage();
+        } catch (ResponseErrorException e) {
+            deleteEvents = isDeleteEventsByCode(e.getHttpCode());
+            errorMessage = "ResponseErrorException: " + e.getMessage();
+        } catch (Exception e) {
+            deleteEvents = false;
+            errorMessage = "Exception: " + e.getMessage();
+        } finally {
+            if (!TextUtils.isEmpty(errorMessage)) {
+                if (null != mClsConfigOptions.getCallback()) {
+                    mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.FAIL, errorMessage);
+                }
+                CLSLog.i(TAG, errorMessage);
+            } else {
+                if (null != mClsConfigOptions.getCallback()) {
+                    mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.SUCCESS, "success");
+                }
+            }
+            if (deleteEvents) {
+                int count = 100;
+                try {
+                    count = mDbAdapter.cleanupEvents(eventIds, is_instant_event);
+                } catch (Exception e) {
+                    CLSLog.printStackTrace(e);
+                    isContinue = false;
+                    CLSLog.i(TAG,"Failed to clean up events");
+                }
+                CLSLog.i(TAG, String.format(Locale.CHINA, "Events flushed. [left = %d]", count));
+            } else {
+                BATCH_ID.decrementAndGet();
+                isContinue = false;
+            }
+        }
+        return isContinue;
+    }
+
+    private void sendData(boolean is_instant_event)  {
         if (!sendCheck()) {
             return;
         }
-        int count = 100;
-        while (count > 0) {
-            boolean deleteEvents = true;
-            byte[][] eventsData;
+
+        while (true) {
+            Map<String, EventData> eventsData;
             synchronized (mDbAdapter) {
                 eventsData = mDbAdapter.generateDataString(DbParams.TABLE_EVENTS, mClsConfigOptions.getFlushBulkSize(), is_instant_event);
             }
-            if (eventsData == null) {
+            if (null == eventsData || eventsData.isEmpty()) {
                 return;
             }
-            final String eventIds = new String(eventsData[0], StandardCharsets.UTF_8);
-            final byte[] rawMessage = eventsData[1];
-            String errorMessage = null;
-            try {
-                Logs.LogGroup.Builder logGroupBuilder = Logs.LogGroup.newBuilder();
-                Logs.LogGroupList.Builder grpList = Logs.LogGroupList.newBuilder();
-                byte[] compressedData;
-                try {
-                    logGroupBuilder.mergeFrom(rawMessage);
-                    logGroupBuilder.setContextFlow(Utils.generatePackageId(producerHash, BATCH_ID));
-                    // 增加tag
-                    for (Map.Entry<String, String> entry : mClsConfigOptions.getTag().entrySet()) {
-                        logGroupBuilder.addLogTags(Logs.LogTag.newBuilder().setKey(entry.getKey()).setValue(entry.getValue()));
-                    }
-                    // 内容压缩
-                    compressedData = LZ4Encoder.compressToLhLz4Chunk(grpList.addLogGroupList(logGroupBuilder).build().toByteArray());
-                } catch (Exception e) {
-                    throw new InvalidDataException(e.getMessage());
+            // 遍历所有 key
+            for (String key : eventsData.keySet()) {
+                JSONArray eventIds = Objects.requireNonNull(eventsData.get(key)).getEventIds();
+                Logs.LogGroup.Builder logGroupBuilder = Objects.requireNonNull(eventsData.get(key)).getLogs();
+                if (null == eventIds || eventIds.length() <= 0 || key.equals("AllEventIds")) {
+                    continue;
                 }
-                // 构造请求header 头
-                HashMap<String, String> headParameter = new HashMap<>(3);
-                headParameter.put(Constants.CONST_CONTENT_LENGTH, String.valueOf(compressedData.length));
-                headParameter.put(Constants.CONST_CONTENT_TYPE, Constants.CONST_PROTO_BUF);
-                headParameter.put(Constants.CONST_HOST, mClsConfigOptions.getHost());
-                HashMap<String, String> urlParameter = new HashMap<>(1);
-                urlParameter.put(Constants.TOPIC_ID, mClsConfigOptions.getTopicId());
-                if (mClsConfigOptions.getCredential().getSecretId() != null && !mClsConfigOptions.getCredential().getSecretId().isEmpty()) {
-                    // 构造签名
-                    String signature = QcloudClsSignature.buildSignature(
-                            mClsConfigOptions.getCredential().getSecretId(),
-                            mClsConfigOptions.getCredential().getSecretKey(),
-                            HttpMethod.POST.toString(),
-                            Constants.UPLOAD_LOG_RESOURCE_URI,
-                            urlParameter, headParameter,
-                            86400000);
-                    headParameter.put(Constants.CONST_AUTHORIZATION, signature);
+                if (key.equals("InvalidIds")) {
+                    deleteInvalidEvents(eventIds, is_instant_event);
+                    continue;
                 }
-                headParameter.put("x-cls-compress-type", "lz4");
-                headParameter.put("x-cls-add-source", "1");
-                if (!mClsConfigOptions.getCredential().getToken().isEmpty()) {
-                    headParameter.put("X-Cls-Token", mClsConfigOptions.getCredential().getToken());
+                String topic = key;
+                if (key.equals("OldEventData")) {
+                   topic = mClsConfigOptions.getTopicId();
                 }
-                headParameter.put("User-Agent", "cls-android-sdk-2.0.0");
-                // do send http reuqest
-                sendHttpRequest(mClsConfigOptions.getEndpoint()+Constants.UPLOAD_LOG_RESOURCE_URI+"?topic_id="+mClsConfigOptions.getTopicId(), compressedData, headParameter);
-            } catch (ConnectErrorException e) {
-                deleteEvents = false;
-                errorMessage = "Connection error: " + e.getMessage();
-            } catch (InvalidDataException e) {
-                errorMessage = "Invalid data: " + e.getMessage();
-            } catch (ResponseErrorException e) {
-                deleteEvents = isDeleteEventsByCode(e.getHttpCode());
-                errorMessage = "ResponseErrorException: " + e.getMessage();
-            } catch (Exception e) {
-                deleteEvents = false;
-                errorMessage = "Exception: " + e.getMessage();
-            } finally {
-                if (!TextUtils.isEmpty(errorMessage)) {
-                   if(null != mClsConfigOptions.getCallback()) {
-                       mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.FAIL, errorMessage);
-                   }
-                    CLSLog.i(TAG, errorMessage);
-                } else {
-                    if(null != mClsConfigOptions.getCallback()) {
-                        mClsConfigOptions.getCallback().onCompletion(TrackLogEventCallBack.SUCCESS, "success");
-                    }
-                }
-                if (deleteEvents) {
-                    try {
-                        count = mDbAdapter.cleanupEvents(new JSONArray(eventIds), is_instant_event);
-                    } catch (Exception e) {
-                        CLSLog.printStackTrace(e);
-                    }
-                    CLSLog.i(TAG, String.format(Locale.CHINA, "Events flushed. [left = %d]", count));
-                } else {
-                    BATCH_ID.decrementAndGet();
-                    count = 0;
+                if (!sendEvents(topic, eventIds, logGroupBuilder, is_instant_event)) {
+                   return;
                 }
             }
         }

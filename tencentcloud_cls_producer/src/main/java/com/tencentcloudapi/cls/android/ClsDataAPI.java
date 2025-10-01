@@ -105,8 +105,11 @@ public class ClsDataAPI {
             throw e;
         }
     }
-
     public void trackLog(LogItem logItem) throws InvalidDataException {
+        trackLog(mClsConfigOptions.getTopicId(), logItem);
+    }
+
+    public void trackLog(String topicId, LogItem logItem) throws InvalidDataException {
         try {
             if (logItem == null) {
                 throw new InvalidDataException("logItem must not be null");
@@ -117,7 +120,8 @@ public class ClsDataAPI {
             if (logItem.mContents.getContentsCount() <= 0) {
                 throw new InvalidDataException("logItem contents must not be empty");
             }
-            String data = Base64.encodeToString(logItem.mContents.build().toByteArray(), Base64.DEFAULT);
+
+            String data = Base64.encodeToString(logItem.mContents.build().toByteArray(), Base64.DEFAULT) + "\t" + topicId;
             mTrackTaskManager.addTrackEventTask(new Runnable() {
                 @Override
                 public void run() {

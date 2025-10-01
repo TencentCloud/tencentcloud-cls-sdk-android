@@ -6,6 +6,8 @@ import com.tencentcloudapi.cls.android.CLSLog;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Map;
+
 public class DbAdapter {
     private static DbAdapter instance;
     private final DbParams mDbParams;
@@ -66,7 +68,7 @@ public class DbAdapter {
      * @param is_instant_event 是否实时数据
      * @return 数据
      */
-    public byte[][] generateDataString(String tableName, int limit, boolean is_instant_event) {
+    public Map<String, EventData> generateDataString(String tableName, int limit, boolean is_instant_event) {
         try {
             return mTrackEventOperation.queryData(mDbParams.getEventUri(), is_instant_event, limit);
         } catch (Exception e) {

@@ -14,7 +14,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Objects;
 
 abstract class DataOperation {
     String TAG = "EventDataOperation";
@@ -44,9 +45,9 @@ abstract class DataOperation {
     /**
      * query data
      */
-    abstract byte[][] queryData(Uri uri, int limit);
+    abstract Map<String, EventData> queryData(Uri uri, int limit);
 
-    abstract byte[][] queryData(Uri uri, boolean is_instant_event, int limit);
+    abstract Map<String, EventData> queryData(Uri uri, boolean is_instant_event, int limit);
 
     /**
      * 查收数据库数据
@@ -142,16 +143,6 @@ abstract class DataOperation {
         }
     }
 
-    String parseData(String keyData) {
-        try {
-            if (TextUtils.isEmpty(keyData)) return "";
-            return keyData;
-        } catch (Exception ex) {
-            CLSLog.printStackTrace(ex);
-        }
-        return keyData;
-    }
-
     /**
      * delete data when db is full
      *
@@ -161,13 +152,11 @@ abstract class DataOperation {
     int deleteDataLowMemory(Uri uri) {
         if (belowMemThreshold()) {
             CLSLog.i(TAG, "There is not enough space left on the device to store events, so will delete 100 oldest events");
-            byte[][] eventsData = queryData(uri, 100);
-            if (eventsData == null) {
+            Map<String, EventData> eventsData = queryData(uri, 100);
+            if (eventsData.isEmpty() || null == eventsData.get("eventsData")) {
                 return DbParams.DB_OUT_OF_MEMORY_ERROR;
             }
-
-            final String lastId = new String(eventsData[0], StandardCharsets.UTF_8);
-            deleteData(uri, lastId);
+            deleteData(uri, Objects.requireNonNull(eventsData.get("eventsData")).getEventIds());
             if (queryDataCount(uri, 2) <= 0) {
                 return DbParams.DB_OUT_OF_MEMORY_ERROR;
             }
