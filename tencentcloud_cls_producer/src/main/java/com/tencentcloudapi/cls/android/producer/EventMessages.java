@@ -310,7 +310,7 @@ public class EventMessages {
             synchronized (mDbAdapter) {
                 eventsData = mDbAdapter.generateDataString(DbParams.TABLE_EVENTS, mClsConfigOptions.getFlushBulkSize(), is_instant_event);
             }
-            if (null == eventsData || eventsData.isEmpty()) {
+            if (null == eventsData || eventsData.isEmpty() || Objects.requireNonNull(eventsData.get("AllEventIds")).getEventIds().length() <= 0) {
                 return;
             }
             // 遍历所有 key
