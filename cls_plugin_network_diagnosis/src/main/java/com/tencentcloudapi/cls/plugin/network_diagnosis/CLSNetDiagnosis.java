@@ -54,6 +54,8 @@ public class CLSNetDiagnosis {
     private final TaskIdGenerator taskIdGenerator = new TaskIdGenerator();
     private final Handler handler;
 
+    private String reportTopicId = "";
+
     private static class Holder {
         private final static CLSNetDiagnosis INSTANCE = new CLSNetDiagnosis();
     }
@@ -81,9 +83,10 @@ public class CLSNetDiagnosis {
         return Holder.INSTANCE;
     }
 
-    void init(Context context, ClsConfigOptions config, Map<String, String> ext) {
+    void init(Context context, ClsConfigOptions config, Map<String, String> ext, String reportTopicId) {
         this.mConfig = config;
         this.mContext = context;
+        this.reportTopicId = reportTopicId;
         if (null != ext && !ext.isEmpty()) {
             for (Map.Entry<String, String> entry : ext.entrySet()) {
                 this.ext.put( entry.getKey(), entry.getValue());
@@ -127,7 +130,11 @@ public class CLSNetDiagnosis {
             logItem.PushBack(new LogContent(entry.getKey(), entry.getValue()));
         }
         try {
-            ClsDataAPI.sharedInstance(this.mContext).trackLog(logItem);
+            if (TextUtils.isEmpty(reportTopicId)) {
+                ClsDataAPI.sharedInstance(this.mContext).trackLog(logItem);
+            } else {
+                ClsDataAPI.sharedInstance(this.mContext).trackLog(reportTopicId, logItem);
+            }
         } catch (Exception e) {
             CLSLog.printStackTrace(e);
         }

@@ -25,6 +25,11 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
     Map<String, String> getExt() {
         return ext;
     }
+    private String reportTopicId = "";
+    @Override
+    public void setReportTopicId(String reportTopicId) {
+        this.reportTopicId = reportTopicId;
+    }
 
     @Override
     public void addCustomField(String key, String value) {
@@ -38,7 +43,7 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
     }
     @Override
     public void init(Context context, ClsConfigOptions config) {
-        CLSNetDiagnosis.getInstance().init(context, config, getExt());
+        CLSNetDiagnosis.getInstance().init(context, config, getExt(), reportTopicId);
     }
 }
 

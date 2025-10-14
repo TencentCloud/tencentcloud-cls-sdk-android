@@ -20,4 +20,6 @@ public interface IPlugin {
     void init(Context context, ClsConfigOptions config);
 
     void addCustomField(String key, String value);
+
+    void setReportTopicId(String reportTopicId);
 }
