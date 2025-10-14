@@ -38,7 +38,6 @@ secretId和secretKey为云API密钥，密钥信息获取请前往[密钥获取](
 数据flush条件：
 1、用户主动触发
 2、与上次发送的时间间隔是否大于 flushInterval
-3、本地缓存日志数目是否大于 flushBulkSize
 ```
 
 ## 日志上传Demo
@@ -94,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '2.0.1')
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.1')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '2.0.2')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.2')
 ```
 
 接入Android应用的网络数据所涉及的依赖包说明如下表所示。
