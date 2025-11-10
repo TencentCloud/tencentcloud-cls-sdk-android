@@ -111,6 +111,9 @@ public class ClsDataAPI {
 
     public void trackLog(String topicId, LogItem logItem) throws InvalidDataException {
         try {
+            if (TextUtils.isEmpty(topicId)) {
+                throw new InvalidDataException("topicId must not be null");
+            }
             if (logItem == null) {
                 throw new InvalidDataException("logItem must not be null");
             }

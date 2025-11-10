@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         // 添加插件，自定义插件上报CLS内容
         AbstractPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
         clsNetDiagnosisPlugin.addCustomField("test", "tag");
+//        clsNetDiagnosisPlugin.setReportTopicId("2");
         ClsDataAPI.sharedInstance(context).
                 addPlugin(clsNetDiagnosisPlugin).
                 startPlugin(context);
