@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Build.VERSION;
 import android.text.TextUtils;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
+import com.tencentcloudapi.cls.android.utils.AppUtils;
+import com.tencentcloudapi.cls.android.utils.DeviceUtils;
+import com.tencentcloudapi.cls.android.utils.RootUtil;
 
 /**
  * Define the scheme of collection data.

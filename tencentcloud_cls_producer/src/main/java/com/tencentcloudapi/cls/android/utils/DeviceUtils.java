@@ -3,7 +3,7 @@
 // (powered by Fernflower decompiler)
 //
 
-package com.tencentcloudapi.cls.android.scheme;
+package com.tencentcloudapi.cls.android.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,7 +27,6 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import com.tencentcloudapi.cls.android.CLSLog;
-import com.tencentcloudapi.cls.android.utdid.Utdid;
 
 /**
  * Utils set for get device info.
@@ -35,21 +34,12 @@ import com.tencentcloudapi.cls.android.utdid.Utdid;
  * @author farmerx
  * @date 2022/03/10
  */
-class DeviceUtils {
-
+public class DeviceUtils {
     public static final String COMMAND_HARMONYOS_VERSION = "getprop hw_sc.build.platform.version";
     private static final String TAG = "DeviceUtils";
-
-    public static final String NETWORK_CLASS_WIFI = "Wi-Fi";
-    private static final String NETWORK_CLASS_2_G = "2G";
-    private static final String NETWORK_CLASS_3_G = "3G";
-    private static final String NETWORK_CLASS_4_G = "4G";
-    private static final String NETWORK_CLASS_UNKNOWN = "Unknown";
     private static String cpuName = null;
     private static final String[] NETWORK_INFO_DEFAULT = new String[] {"Unknown", "Unknown"};
     private static final String[] NETWORK_INFO = new String[] {"Unknown", "Unknown"};
-    private static String imsi = null;
-    private static String imei = null;
 
     private DeviceUtils() {
     }
@@ -74,7 +64,8 @@ class DeviceUtils {
                         return var4;
                     }
                 }
-            } catch (IOException var15) {
+            } catch (IOException e) {
+                CLSLog.printStackTrace(e);
             } finally {
                 try {
                     if (fr != null) {
@@ -84,7 +75,8 @@ class DeviceUtils {
                     if (localBufferedReader != null) {
                         localBufferedReader.close();
                     }
-                } catch (Exception var14) {
+                } catch (Exception e) {
+                    CLSLog.printStackTrace(e);
                 }
 
             }
@@ -231,39 +223,18 @@ class DeviceUtils {
         }
     }
 
-    @SuppressLint({"MissingPermission", "HardwareIds"})
-    public static String getImsi(Context context) {
-        if (imsi != null) {
-            return imsi;
-        } else {
-            imsi = Utdid.getImsi(context);
-            return imsi;
-        }
-    }
-
-    public static String getImei(Context context) {
-        if (imei != null) {
-            return imei;
-        } else {
-            imei = Utdid.getImei(context);
-            return imei;
-        }
-    }
-
     public static String getDns(Context context) {
         String[] dnsServers = getDnsFromCommand();
-        if (dnsServers == null || dnsServers.length == 0) {
+        if (dnsServers.length == 0) {
             dnsServers = getDnsFromConnectionManager(context);
         }
-        StringBuffer sb = new StringBuffer();
-        if (dnsServers != null) {
-            // 使用for-each循环遍历数组并输出每个元素
-            for (String str : dnsServers) {
-                sb.append(str).append(",");
-            }
+        StringBuilder sb = new StringBuilder();
+        // 使用for-each循环遍历数组并输出每个元素
+        for (String str : dnsServers) {
+            sb.append(str).append(",");
         }
         String res = sb.toString();
-        if (res.length() > 0) {
+        if (!res.isEmpty()) {
             return res.substring(0, res.length() - 1);
         }
         return "-";
@@ -288,15 +259,14 @@ class DeviceUtils {
                         || property.endsWith(".dns3")
                         || property.endsWith(".dns4")) {
                     InetAddress ip = InetAddress.getByName(value);
-                    if (ip == null) continue;
                     value = ip.getHostAddress();
                     if (value == null) continue;
-                    if (value.length() == 0) continue;
+                    if (value.isEmpty()) continue;
                     dnsServers.add(value);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            CLSLog.printStackTrace(e);
         }
         return dnsServers.isEmpty() ? new String[0] : dnsServers.toArray(new String[dnsServers.size()]);
     }
@@ -323,7 +293,7 @@ class DeviceUtils {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            CLSLog.printStackTrace(e);
         }
         return dnsServers.isEmpty() ? new String[0] : dnsServers.toArray(new String[dnsServers.size()]);
     }
@@ -432,5 +402,9 @@ class DeviceUtils {
             }
         }
         return null;
+    }
+
+    public static boolean isRoot() {
+        return RootUtil.isDeviceRooted();
     }
 }

@@ -1,45 +1,100 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis.network;
 
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
+import android.app.Application;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.os.Build.VERSION;
+import android.provider.Settings.System;
+import android.util.Log;
 
-import java.io.Closeable;
+import com.tencentcloudapi.cls.android.CLSLog;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.util.UUID;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public final class Utils {
-    static void runInMain(Runnable r) {
-        Handler h = new Handler(Looper.getMainLooper());
-        h.post(r);
+public class Utils {
+    static Application mAapplication;
+    private static String countryId = "CN";
+    private static JSONObject policyGeo = null;
+    public Utils() {
     }
 
-    static void runInBack(Runnable r) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            AsyncTask.execute(r);
+    static void storeApplication(Application application) {
+        if (application != null) {
+            mAapplication = application;
+        }
+    }
+
+    public static Application getApplication() {
+        return mAapplication;
+    }
+
+    public static boolean canWriteSetting() {
+        return VERSION.SDK_INT < 23 || System.canWrite(getApplication().getApplicationContext());
+    }
+
+    static void setCountryId(String id) {
+        if (id != null && !id.equalsIgnoreCase("")) {
+            if (!id.equalsIgnoreCase(countryId)) {
+                countryId = id;
+            }
+            CLSLog.d("Utils", "setCountryId: " + id + ", old id:" + countryId);
+        }
+    }
+
+    static String getCountryId() {
+        return countryId;
+    }
+
+    static boolean isOversea() {
+        return !countryId.equalsIgnoreCase("CN");
+    }
+
+    /**
+     * 计算float数组的标准差（优化版）
+     * @param data 输入数据数组
+     * @param isSample 是否为样本标准差（true使用n-1，false使用n）
+     * @return 标准差计算结果
+     */
+    public static double calculateStdDevOptimized(float[] data, boolean isSample) {
+        // 1. 检查输入有效性
+        if (data == null || data.length == 0) {
+            return 0.0;
+        }
+
+        // 2. 计算总和和平方和（单次遍历优化）
+        double sum = 0.0;
+        double sumSquared = 0.0;
+
+        for (float num : data) {
+            sum += num;
+            sumSquared += num * num;
+        }
+
+        int n = data.length;
+
+        // 3. 计算方差（避免两次遍历）
+        double variance;
+        if (isSample && n > 1) {
+            // 样本标准差公式：方差 = [Σx² - (Σx)²/n] / (n-1)
+            variance = (sumSquared - sum * sum / n) / (n - 1);
         } else {
-            new Thread(r).start();
+            // 总体标准差公式：方差 = [Σx² - (Σx)²/n] / n
+            variance = (sumSquared - sum * sum / n) / n;
         }
-    }
 
-     static String getIp(String host) throws UnknownHostException {
-        InetAddress i = InetAddress.getByName(host);
-        return i.getHostAddress();
-    }
+        // 4. 处理可能的浮点计算误差（确保方差非负）
+        variance = Math.max(0.0, variance);
 
-    public static void closeAllCloseable(Closeable... closeables) {
-        if (closeables == null || closeables.length <= 0)
-            return;
-
-        for (Closeable closeable : closeables) {
-            if (closeable != null)
-                try {
-                    closeable.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-        }
+        // 5. 返回标准差（方差的平方根）
+        return Math.sqrt(variance);
     }
 }

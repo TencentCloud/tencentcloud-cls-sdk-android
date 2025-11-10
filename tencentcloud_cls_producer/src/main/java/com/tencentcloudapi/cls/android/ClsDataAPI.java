@@ -11,7 +11,7 @@ import com.tencentcloudapi.cls.android.producer.TrackTaskManager;
 import com.tencentcloudapi.cls.android.producer.TrackTaskManagerThread;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
 import com.tencentcloudapi.cls.android.producer.util.NetworkUtils;
-import com.tencentcloudapi.cls.android.scheme.AppUtils;
+import com.tencentcloudapi.cls.android.utils.AppUtils;
 
 import java.util.ArrayList;
 import java.util.List;

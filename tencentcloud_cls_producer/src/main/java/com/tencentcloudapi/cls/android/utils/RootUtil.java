@@ -1,4 +1,4 @@
-package com.tencentcloudapi.cls.android.scheme;
+package com.tencentcloudapi.cls.android.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
  * @author farmerx
  * @date 2022/03/10
  */
-class RootUtil {
+public class RootUtil {
     private static boolean hasChecked = false;
     private static boolean rooted = false;
 
@@ -30,8 +30,8 @@ class RootUtil {
 
     private static boolean checkRootMethod2() {
         String[] paths = {"/system/app/Superuser.apk", "/sbin/su", "/system/bin/su", "/system/xbin/su",
-            "/data/local/xbin/su", "/data/local/bin/su", "/system/sd/xbin/su",
-            "/system/bin/failsafe/su", "/data/local/su", "/su/bin/su"};
+                "/data/local/xbin/su", "/data/local/bin/su", "/system/sd/xbin/su",
+                "/system/bin/failsafe/su", "/data/local/su", "/su/bin/su"};
         for (String path : paths) {
             if (new File(path).exists()) { return true; }
         }

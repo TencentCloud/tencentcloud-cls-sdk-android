@@ -37,4 +37,5 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0' // （可选）最低兼容3.10.0版本，HTTP探测时必须
 }

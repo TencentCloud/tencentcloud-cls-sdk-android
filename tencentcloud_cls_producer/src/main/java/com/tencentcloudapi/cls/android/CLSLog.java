@@ -52,7 +52,7 @@ public final class CLSLog {
     }
     public static void printStackTrace(Exception e) {
         if (enableLog && e != null) {
-            Log.e("SA.Exception", "", e);
+            Log.e("CLS.Exception", "", e);
         }
 
     }

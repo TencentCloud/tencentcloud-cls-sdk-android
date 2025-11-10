@@ -1,5 +1,10 @@
-package com.tencentcloudapi.cls.android.utdid;
+package com.tencentcloudapi.cls.android.utils;
 
+import android.content.Context;
+import android.text.TextUtils;
+import android.util.Base64;
+
+import com.tencentcloudapi.cls.android.CLSLog;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,14 +19,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.UUID;
 
-import android.content.Context;
-import android.text.TextUtils;
-import android.util.Base64;
-
-/**
- * @author farmerx
- * @date 2022/03/10
- */
 public final class Utdid {
     private Utdid() {
         //no instance
@@ -35,13 +32,20 @@ public final class Utdid {
         return Holder.INSTANCE;
     }
 
-    public static String getImei(Context context) {
-        return Generator.getImei(context);
+    public synchronized void setUtdid(Context context, String utdid) {
+        if (null == context || TextUtils.isEmpty(utdid)) {
+            return;
+        }
+        try {
+            Lock.lock(context);
+            Storage.getInstance().setUtdid(context, utdid);
+        } catch (Throwable t) {
+            // ignore
+        } finally {
+            Lock.unlock();
+        }
     }
 
-    public static String getImsi(Context context) {
-        return Generator.getImsi(context);
-    }
     public synchronized String getUtdid(Context context) {
         String utdid = Storage.getInstance().getUtdid(context);
         if (!TextUtils.isEmpty(utdid)) {
@@ -53,6 +57,7 @@ public final class Utdid {
             utdid = UUID.randomUUID().toString();
             String[] parts = utdid.split("-");
             utdid = parts[0] + parts[1] + parts[2];
+            //noinspection CharsetObjectCanBeUsed
             utdid = Base64.encodeToString(utdid.getBytes("UTF-8"), Base64.DEFAULT);
 
             Storage.getInstance().setUtdid(context, utdid);
@@ -69,7 +74,8 @@ public final class Utdid {
         final String FILE_PATH = "/cls_android/files";
 
         private static class Holder {
-            final static Storage INSTANCE = new Storage();
+            final static Utdid.Storage
+                    INSTANCE = new Utdid.Storage();
         }
 
         static Storage getInstance() {
@@ -80,11 +86,12 @@ public final class Utdid {
             final File file = getFile(context);
             try {
                 FileOutputStream fos = new FileOutputStream(file);
+                //noinspection CharsetObjectCanBeUsed
                 OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
                 writer.write(utdid);
                 writer.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                CLSLog.printStackTrace(e);
             }
         }
 
@@ -93,7 +100,6 @@ public final class Utdid {
             if (!file.exists()) {
                 return "";
             }
-
             try {
                 FileInputStream fis = new FileInputStream(file);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
@@ -103,9 +109,8 @@ public final class Utdid {
                 line = validUtdid(line);
                 return line;
             } catch (IOException e) {
-                e.printStackTrace();
+                CLSLog.printStackTrace(e);
             }
-
             return "";
         }
 

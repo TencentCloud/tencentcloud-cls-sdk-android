@@ -1,1 +1,6 @@
 /build
+MainActivity.java
+app/build.gradle
+app/src/main/res/xml/network_security_config.xml
+app/src/main/AndroidManifest.xml
+

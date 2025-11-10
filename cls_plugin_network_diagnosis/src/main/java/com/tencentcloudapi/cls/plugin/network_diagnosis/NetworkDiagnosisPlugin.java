@@ -8,7 +8,7 @@ import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class CLSNetDiagnosisPlugin extends AbstractPlugin {
+public class NetworkDiagnosisPlugin extends AbstractPlugin {
     private static final String TAG = "CLSNetDiagnosisPlugin";
 
     @Override
@@ -18,7 +18,7 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
 
     @Override
     public String version() {
-        return "2.0.0";
+        return "3.0.0";
     }
 
     Map<String, String> ext = new LinkedHashMap<>();
@@ -38,7 +38,7 @@ public class CLSNetDiagnosisPlugin extends AbstractPlugin {
     }
     @Override
     public void init(Context context, ClsConfigOptions config) {
-        CLSNetDiagnosis.getInstance().init(context, config, getExt());
+        NetworkDiagnosis networkDiagnosis = new NetworkDiagnosis();
+        networkDiagnosis.onPreInit(context, config, getExt());
     }
 }
-
