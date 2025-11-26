@@ -4,9 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.os.Bundle;
-import com.aliyun.sls.android.core.SLSLog;
-import com.aliyun.sls.android.network_diagnosis.INetworkDiagnosis;
-import com.aliyun.sls.android.network_diagnosis.NetworkDiagnosis;
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.Credential;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
@@ -39,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
     }
-
 
     public SSLContext getSSLContext(Context context) throws NoSuchAlgorithmException {
         return SSLContext.getDefault();
