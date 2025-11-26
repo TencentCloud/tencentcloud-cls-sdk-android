@@ -19,6 +19,9 @@ public interface INetworkDiagnosis {
     String DNS_TYPE_IPv4 = "A";
     String DNS_TYPE_IPv6 = "AAAA";
 
+    int DEFAULT_MTR_MAX_TTL = 30;
+    int DEFAULT_MTR_MAX_PATH = 1;
+
 
     enum Type {
         HTTP("http"),
@@ -147,4 +150,27 @@ public interface INetworkDiagnosis {
 
     void dns(DnsRequest request, Callback callback);
 
+
+    class MtrRequest extends PingRequest {
+        public enum Protocol {
+            ALL("all"),
+            ICMP("icmp"),
+            UDP("udp");
+
+            public final String protocol;
+
+            Protocol(String protocol) {
+                this.protocol = protocol;
+            }
+        }
+
+        public int maxTTL = DEFAULT_MTR_MAX_TTL;
+        public int maxPaths = DEFAULT_MTR_MAX_PATH;
+        public int proto = 1;
+        public Protocol protocol = Protocol.ALL;
+    }
+
+    void mtr(MtrRequest request);
+
+    void mtr(MtrRequest request, Callback callback);
 }

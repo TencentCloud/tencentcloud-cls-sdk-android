@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.UUID;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -96,5 +99,21 @@ public class Utils {
 
         // 5. 返回标准差（方差的平方根）
         return Math.sqrt(variance);
+    }
+
+    public static ArrayList<String> parseDnsStringToJsonArray(String dnsString) {
+        ArrayList<String> dnsList = new ArrayList<>();
+
+        if (dnsString != null && !dnsString.trim().isEmpty()) {
+            // 去除空格并按逗号分割
+            String[] dnsServers = dnsString.split("\\s*,\\s*");
+
+            for (String dns : dnsServers) {
+                if (!dns.trim().isEmpty()) {
+                    dnsList.add(dns.trim());
+                }
+            }
+        }
+        return dnsList;
     }
 }

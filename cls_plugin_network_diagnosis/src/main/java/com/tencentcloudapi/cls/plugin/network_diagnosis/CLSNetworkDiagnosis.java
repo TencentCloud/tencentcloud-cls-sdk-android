@@ -85,4 +85,18 @@ public class CLSNetworkDiagnosis implements INetworkDiagnosis {
             networkDiagnosis.dns(request, callback);
         }
     }
+
+    @Override
+    public void mtr(MtrRequest request) {
+        if (checkNetworkDiagnosis()) {
+            networkDiagnosis.mtr(request);
+        }
+    }
+
+    @Override
+    public void mtr(MtrRequest request, Callback callback) {
+        if (checkNetworkDiagnosis()) {
+            networkDiagnosis.mtr(request, callback);
+        }
+    }
 }

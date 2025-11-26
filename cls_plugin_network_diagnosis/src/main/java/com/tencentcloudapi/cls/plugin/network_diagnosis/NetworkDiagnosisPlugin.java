@@ -36,6 +36,12 @@ public class NetworkDiagnosisPlugin extends AbstractPlugin {
         }
         ext.put(key, value);
     }
+
+    @Override
+    public void setReportTopicId(String reportTopicId) {
+
+    }
+
     @Override
     public void init(Context context, ClsConfigOptions config) {
         NetworkDiagnosis networkDiagnosis = new NetworkDiagnosis();

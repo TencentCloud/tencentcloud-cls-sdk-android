@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.NetworkInfo.State;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.Build.VERSION;
 
@@ -20,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketOption;
@@ -405,6 +407,8 @@ public class Channel {
             }
         }
 
+
+
         @SuppressLint({"NewApi"})
         boolean hasInternetCapability(Network network) {
             if (connectivityManager == null) {
@@ -638,7 +642,7 @@ public class Channel {
         }
 
         @SuppressLint({"NewApi"})
-        private String getDnsServers(Network network) {
+        String getDnsServers(Network network) {
             if (connectivityManager != null && network != null) {
                 LinkProperties lp = connectivityManager.getLinkProperties(network);
                 if (lp == null) {
@@ -646,6 +650,7 @@ public class Channel {
                 } else {
                     String dnsServers = "";
                     for (InetAddress addr : lp.getDnsServers()) {
+                        // 过滤掉 IPv6 地址，只保留 IPv4 地址
                         if (dnsServers.equalsIgnoreCase("")) {
                             dnsServers = dnsServers + addr.getHostAddress();
                         } else {
@@ -657,6 +662,19 @@ public class Channel {
             } else {
                 return null;
             }
+        }
+        @SuppressLint({"NewApi"})
+        public String getInterfaceName(Network network) {
+            String interfaceName = "";
+            if (connectivityManager != null && network != null) {
+                LinkProperties lp = connectivityManager.getLinkProperties(network);
+                if (lp == null) {
+                    return "";
+                } else {
+                    interfaceName =  lp.getInterfaceName();
+                }
+            }
+            return interfaceName;
         }
 
         @SuppressLint({"NewApi"})

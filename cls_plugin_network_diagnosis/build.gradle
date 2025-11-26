@@ -76,13 +76,29 @@ android {
     namespace "com.tencentcloudapi.cls.plugin.network_diagnosis"
 
     defaultConfig {
-        minSdk 19
+        minSdk 21
         targetSdk 33
         versionCode 1
         versionName "2.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true  // 如果使用 AGP 4.0+
+        }
     }
 
     buildTypes {

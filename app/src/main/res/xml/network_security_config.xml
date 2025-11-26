@@ -3,5 +3,7 @@
     <!--    <base-config cleartextTrafficPermitted="true" />-->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">ap-guangzhou-open.cls.tencentcs.com</domain>
+        <domain includeSubdomains="true">mobile-network.cn-beijing.log.aliyuncs.com</domain>
+        <domain includeSubdomains="true">er.ns.aliyuncs.com</domain>
     </domain-config>
 </network-security-config>

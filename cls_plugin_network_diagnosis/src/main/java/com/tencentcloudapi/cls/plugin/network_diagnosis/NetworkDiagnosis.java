@@ -18,13 +18,16 @@ import com.tencentcloudapi.cls.android.utils.TimeUtils;
 import com.tencentcloudapi.cls.android.utils.Utdid;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.DetectCallback;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Diagnosis;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.network.DnsConfig;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.HttpConfig;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.network.MtrConfig;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.PingConfig;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.TcpPingConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,11 +256,83 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
 
     @Override
     public void dns(DnsRequest request) {
-
+        dns(request, null);
     }
 
     @Override
     public void dns(DnsRequest request, Callback callback) {
+        if (null == request || TextUtils.isEmpty(request.domain)) {
+            if (null != callback) {
+                callback.onComplete(Response.error("DnsRequest is null or domain is empty.", Type.PING));
+            }
+            return;
+        }
+        String taskId = UUID.randomUUID().toString();
+        long startTime = TimeUtils.instance.now();
+        final DnsConfig config = new DnsConfig(
+                taskId,
+                request.nameServer,
+                request.domain,
+                request.type,
+                request.timeout <= 0 ? 3000 : request.timeout,
+                new DetectCallback() {
+                    @Override
+                    public void onComplete(JSONObject result) {
+                        try {
+                            if (null != result) {
+                                result.put("userEx", extensions);
+                            }
+                        } catch(Exception e) {
+                            CLSLog.printStackTrace(e);
+                        }
+                        report(callback, result, request.extension, "dns", "app", taskId, startTime);
+                    }
+                },
+                ""
+        );
+        config.multiplePortsDetect = request.multiplePortsDetect;
+        Diagnosis.startDns(config);
+    }
 
+    @Override
+    public void mtr(MtrRequest request) {
+        mtr(request, null);
+    }
+
+    @Override
+    public void mtr(MtrRequest request, Callback callback) {
+        if (null == request || TextUtils.isEmpty(request.domain)) {
+            if (null != callback) {
+                callback.onComplete(Response.error("MtrRequest is null or domain is empty.", Type.MTR));
+            }
+            return;
+        }
+        String taskId = UUID.randomUUID().toString();
+        long startTime = TimeUtils.instance.now();
+        final MtrConfig config = new MtrConfig(
+                taskId,
+                request.domain,
+                request.maxTTL,
+                request.maxPaths,
+                request.maxTimes,
+                request.timeout,
+                new DetectCallback() {
+                    @Override
+                    public void onComplete(JSONObject result) {
+                        try {
+                            if (null != result) {
+                                result.put("userEx", extensions);
+                            }
+                        } catch(Exception e) {
+                            CLSLog.printStackTrace(e);
+                        }
+                        report(callback, result, request.extension, "mtr", "app", taskId, startTime);
+                    }
+                },
+                ""
+        );
+        config.protocol = request.protocol.protocol;
+        config.multiplePortsDetect = request.multiplePortsDetect;
+        Diagnosis.startMtr(config);
     }
 }
