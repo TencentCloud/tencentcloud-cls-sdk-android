@@ -262,33 +262,36 @@ public class Diagnosis {
 
     @SuppressLint({"NewApi"})
     private static void statPingInner(PingConfig config) {
-        config.domain = fixDomain(config.domain);
-        startDetect(new DetectionFunc() {
-            ParcelFileDescriptor pfd = null;
-            int[] socketFds = null;
-            public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                try {
-                    socketFds = Diagnosis.createIcmpSocketNative(0);
-                    int socketFd = socketFds[0];
-                    pfd = ParcelFileDescriptor.adoptFd(socketFds[1]);
-                    network.bindSocket(pfd.getFileDescriptor());
-                    pfd.close();
-                    String value = Diagnosis.PingDetect(config.domain, config.getSize(), config.maxTimes, config.timeout, socketFd);
-                    JSONObject resultJson = new JSONObject(value);
-                    resultJson.put("netInfo", netInfo);
-                    resultJson.put("interface", connectionType);
-                    config.callback.onComplete(resultJson);
-                } catch(IOException e) {
-                    closeSocket(pfd);
-                    closeSocket(ParcelFileDescriptor.adoptFd(socketFds[0]));
-                } catch (JSONException e) {
-                    CLSLog.e(TAG, "Failed to parse ping result: " + e.getMessage());
-                    CLSLog.printStackTrace(e);
-                } catch (Exception e) {
-                    CLSLog.e(TAG, "Failed to get socket file descriptor: " + e.getMessage());
+        if (loadLib()) {
+            config.domain = fixDomain(config.domain);
+            startDetect(new DetectionFunc() {
+                ParcelFileDescriptor pfd = null;
+                int[] socketFds = null;
+
+                public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
+                    try {
+                        socketFds = Diagnosis.createIcmpSocketNative(0);
+                        int socketFd = socketFds[0];
+                        pfd = ParcelFileDescriptor.adoptFd(socketFds[1]);
+                        network.bindSocket(pfd.getFileDescriptor());
+                        pfd.close();
+                        String value = Diagnosis.PingDetect(config.domain, config.getSize(), config.maxTimes, config.timeout, socketFd);
+                        JSONObject resultJson = new JSONObject(value);
+                        resultJson.put("netInfo", netInfo);
+                        resultJson.put("interface", connectionType);
+                        config.callback.onComplete(resultJson);
+                    } catch (IOException e) {
+                        closeSocket(pfd);
+                        closeSocket(ParcelFileDescriptor.adoptFd(socketFds[0]));
+                    } catch (JSONException e) {
+                        CLSLog.e(TAG, "Failed to parse ping result: " + e.getMessage());
+                        CLSLog.printStackTrace(e);
+                    } catch (Exception e) {
+                        CLSLog.e(TAG, "Failed to get socket file descriptor: " + e.getMessage());
+                    }
                 }
-            }
-        }, config, config.taskId);
+            }, config, config.taskId);
+        }
     }
 
     @SuppressLint({"NewApi"})
