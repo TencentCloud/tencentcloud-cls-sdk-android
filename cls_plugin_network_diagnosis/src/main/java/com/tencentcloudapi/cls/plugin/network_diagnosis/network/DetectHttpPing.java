@@ -135,7 +135,8 @@ public class DetectHttpPing {
                 }
             });
         } catch (Exception e) {
-            CLSLog.e(TAG, "doDetectTcpPing error: " + e.getMessage());
+            CLSLog.printStackTrace(e);
+            CLSLog.e(TAG, "doDetectHttpPing error: " + e.getMessage());
         }
         return null;
     }
