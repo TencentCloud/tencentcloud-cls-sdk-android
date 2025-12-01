@@ -122,7 +122,6 @@ android {
 dependencies {
     implementation project(path: ':tencentcloud_cls_producer')
     implementation 'com.google.guava:guava:27.0.1-android'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.2'
-    implementation 'com.squareup.okio:okio:1.17.4'
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
     testImplementation 'junit:junit:4.+'
 }
