@@ -45,11 +45,11 @@ public class Diagnosis {
         startTask();
     }
 
-    private static native String DnsDetect(String domain, Object dnsServers, int prefer, int timeout, int socket);
-    private static native String PingDetect(String domain, int size, int maxTimes, int timeout, int socket);
-    private static native int[] createIcmpSocketNative(int prefer);
-    private static native int[] createUdpSocketNative(int prefer);
-    private static native String mtrDetect(String domain, String protocol, int maxTTL, int timeout, int maxTimes, int socket, int udpSocket);
+    private static native String PingDetect(String target, int size, int maxTimes, int timeout, int interval, int prefer, SocketBinder binder);
+
+    private static native String DnsDetect(String domain, Object dnsServers, int timeout, int prefer, SocketBinder binder);
+
+    private static native String MtrDetect(String target, String protocol, int maxTtl, int timeout, int times, int prefer, SocketBinder binder);
 
     private static boolean loadLib() {
         try {
@@ -265,29 +265,33 @@ public class Diagnosis {
         if (loadLib()) {
             config.domain = fixDomain(config.domain);
             startDetect(new DetectionFunc() {
-                ParcelFileDescriptor pfd = null;
-                int[] socketFds = null;
-
                 public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
+                    SocketBinder binder = null;
                     try {
-                        socketFds = Diagnosis.createIcmpSocketNative(0);
-                        int socketFd = socketFds[0];
-                        pfd = ParcelFileDescriptor.adoptFd(socketFds[1]);
-                        network.bindSocket(pfd.getFileDescriptor());
-                        pfd.close();
-                        String value = Diagnosis.PingDetect(config.domain, config.getSize(), config.maxTimes, config.timeout, socketFd);
+                        // 如果提供了Network对象，创建binder（networkId由binder内部管理）
+                        if (null != network) {
+                            binder = new NetworkSocketBinder(network, interfaceName);
+                        }
+                        // 直接调用PingDetect，socket创建和绑定都在JNI层完成
+                        String value = Diagnosis.PingDetect(
+                                config.domain,
+                                config.getSize(),
+                                config.maxTimes,
+                                config.timeout,
+                                config.interval,
+                                0,
+                                binder
+                        );
                         JSONObject resultJson = new JSONObject(value);
                         resultJson.put("netInfo", netInfo);
                         resultJson.put("interface", connectionType);
                         config.callback.onComplete(resultJson);
-                    } catch (IOException e) {
-                        closeSocket(pfd);
-                        closeSocket(ParcelFileDescriptor.adoptFd(socketFds[0]));
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse ping result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
                     } catch (Exception e) {
-                        CLSLog.e(TAG, "Failed to get socket file descriptor: " + e.getMessage());
+                        CLSLog.e(TAG, "Ping detection failed: " + e.getMessage());
+                        CLSLog.printStackTrace(e);
                     }
                 }
             }, config, config.taskId);
@@ -314,27 +318,31 @@ public class Diagnosis {
                         CLSLog.e(TAG, "Failed to parse DNS servers: " + e.getMessage());
                         CLSLog.printStackTrace(e);
                     }
-                    ParcelFileDescriptor pfd = null;
-                    int[] socketFds = null;
-                    CLSLog.e(TAG, "Failed to parse DNS servers:xxxxxxxxxxxx");
+
+                    SocketBinder binder = null;
                     try {
-                        socketFds = Diagnosis.createUdpSocketNative(0);
-                        int socketFd = socketFds[0];
-                        pfd = ParcelFileDescriptor.adoptFd(socketFds[1]);
-                        network.bindSocket(pfd.getFileDescriptor());
-                        pfd.close();
-                        String value = Diagnosis.DnsDetect(config.domain, dnsServers, Objects.equals(config.type, "A") ? 2 : 3, config.timeout, socketFd);
+                        // 如果提供了Network对象，创建binder（networkId由binder内部管理）
+                        if (null != network) {
+                            binder = new NetworkSocketBinder(network, interfaceName);
+                        }
+                        // 直接调用DnsDetect，socket创建和绑定都在JNI层完成
+                        String value = Diagnosis.DnsDetect(
+                                config.domain,
+                                dnsServers,
+                                config.timeout,
+                                Objects.equals(config.type, "A") ? 2 : 3,// prefer: 2=IPv4 only, 3=IPv6 only
+                                binder      // SocketBinder回调接口（可以为null，networkId由binder内部管理）
+                        );
+
                         JSONObject resultJson = new JSONObject(value);
                         resultJson.put("netInfo", netInfo);
                         resultJson.put("interface", connectionType);
                         config.callback.onComplete(resultJson);
                     } catch (JSONException e) {
-                        closeSocket(pfd);
-                        closeSocket(ParcelFileDescriptor.adoptFd(socketFds[0]));
                         CLSLog.e(TAG, "Failed to parse DNS result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
                     } catch (Exception e) {
-                        CLSLog.e(TAG, "Failed to get socket file descriptor: " + e.getMessage());
+                        CLSLog.e(TAG, "DNS detection failed: " + e.getMessage());
                         CLSLog.printStackTrace(e);
                     }
                 }
@@ -348,28 +356,32 @@ public class Diagnosis {
             config.domain = fixDomain(config.domain);
             startDetect(new DetectionFunc() {
                 public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                    ParcelFileDescriptor pfd = null;
-                    int[] socketFds = null;
+                    MtrConfig config = (MtrConfig)oConfig;
+                    SocketBinder binder = null;
                     try {
-                        socketFds = Diagnosis.createUdpSocketNative(0);
-                        int socketFd = socketFds[0];
-                        pfd = ParcelFileDescriptor.adoptFd(socketFds[1]);
-                        network.bindSocket(pfd.getFileDescriptor());
-                        pfd.close();
-                        String value = Diagnosis.mtrDetect(config.domain, config.protocol, config.maxTtl, config.maxTimes, config.timeout, socketFd, -1);
-                        CLSLog.e(TAG, "Failed to parse mtr result: " + config.protocol + ", " + config.maxTtl);
+                        // 如果提供了Network对象，创建binder（networkId由binder内部管理）
+                        if (null != network) {
+                            binder = new NetworkSocketBinder(network, interfaceName);
+                        }
+                        String value = Diagnosis.MtrDetect(
+                                config.domain,
+                                config.protocol,
+                                config.maxTtl,
+                                config.timeout,
+                                config.maxTimes,
+                                0,  // prefer: 0=IPv4优先
+                                binder
+                        );
                         JSONObject resultJson = new JSONObject(value);
                         resultJson.put("netInfo", netInfo);
                         resultJson.put("interface", connectionType);
                         config.callback.onComplete(resultJson);
-                    } catch (IOException e) {
-                        closeSocket(pfd);
-                        closeSocket(ParcelFileDescriptor.adoptFd(socketFds[0]));
                     } catch (JSONException e) {
-                        CLSLog.e(TAG, "Failed to parse ping result: " + e.getMessage());
+                        CLSLog.e(TAG, "Failed to parse MTR result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
                     } catch (Exception e) {
-                        CLSLog.e(TAG, "Failed to get socket file descriptor: " + e.getMessage());
+                        CLSLog.e(TAG, "MTR detection failed: " + e.getMessage());
+                        CLSLog.printStackTrace(e);
                     }
                 }
             }, config, config.taskId);
