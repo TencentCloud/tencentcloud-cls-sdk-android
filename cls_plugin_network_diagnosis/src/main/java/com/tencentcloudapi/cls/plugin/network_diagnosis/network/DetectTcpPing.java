@@ -4,25 +4,23 @@ import static com.tencentcloudapi.cls.plugin.network_diagnosis.network.Utils.cal
 
 import android.annotation.SuppressLint;
 import android.net.Network;
-import android.os.Build;
 import com.tencentcloudapi.cls.android.CLSLog;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-
+import java.nio.charset.StandardCharsets;
 
 
 public class DetectTcpPing {
-    private static final String TAG = "DetectTcpPing";
-
     public static final int TimeOut = -3;
     public static final int NotReach = -2;
-    public static final int UnkownHost = -4;
+    public static final int UnknownHost = -4;
 
     DetectTcpPing() {
     }
@@ -45,13 +43,13 @@ public class DetectTcpPing {
             for (int i = 0; i < config.maxTimes; i++) {
                 long start = System.nanoTime();
                 try {
-                    connect(network, server, config.timeout);
+                    connect(network, server, config.timeout, config.payload);
                 } catch (IOException e) {
                     int code = NotReach;
                     if (e instanceof SocketTimeoutException) {
                         code = TimeOut;
                     } else if (e instanceof UnknownHostException) {
-                        code = UnkownHost;
+                        code = UnknownHost;
                     }
                     if (i == 0) {
                         // 返回结果
@@ -75,22 +73,28 @@ public class DetectTcpPing {
             return buildResult(taskId, connectionType, netInfo, config, ip, times, index, dropped, dnsTime);
         } catch (UnknownHostException e) {
             CLSLog.printStackTrace(e);
-            int code = UnkownHost;
+            int code = UnknownHost;
         } catch (Exception e) {
            CLSLog.printStackTrace(e);
         }
         return null;
     }
 
-    private void connect(Network network, InetSocketAddress socketAddress, int timeout) throws IOException {
+    private void connect(Network network, InetSocketAddress socketAddress, int timeout, String payload) throws IOException {
         Socket socket = null;
+        OutputStream outputStream = null;
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && null != network) {
+            if (null != network) {
                 socket = network.getSocketFactory().createSocket();
             } else {
                 socket = new Socket();
             }
             socket.connect(socketAddress, timeout);
+            if (payload != null && !payload.isEmpty()) {
+                outputStream = socket.getOutputStream();
+                outputStream.write(payload.getBytes(StandardCharsets.UTF_8));
+                outputStream.flush();
+            }
         } catch (IOException e) {
             CLSLog.printStackTrace(e);
             throw e;
@@ -98,6 +102,13 @@ public class DetectTcpPing {
             if (socket != null) {
                 try {
                     socket.close();
+                } catch (IOException e) {
+                    CLSLog.printStackTrace(e);
+                }
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
                 } catch (IOException e) {
                     CLSLog.printStackTrace(e);
                 }

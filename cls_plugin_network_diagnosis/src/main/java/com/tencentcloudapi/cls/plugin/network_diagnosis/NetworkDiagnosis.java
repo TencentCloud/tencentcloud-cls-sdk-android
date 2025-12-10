@@ -291,6 +291,11 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
                     }
                 }
         );
+        
+        if (null != request.payload && !request.payload.isEmpty()) {
+            config.setPayload(request.payload);
+        }
+
         config.multiplePortsDetect = request.multiplePortsDetect;
         Diagnosis.startTcpPing(config);
     }
