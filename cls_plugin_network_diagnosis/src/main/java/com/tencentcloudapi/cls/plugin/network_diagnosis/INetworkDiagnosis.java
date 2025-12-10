@@ -102,7 +102,6 @@ public interface INetworkDiagnosis {
 
     class Request {
         public String domain;
-        public Object context;
         public boolean multiplePortsDetect = true;
         public Map<String, String> extension;
     }

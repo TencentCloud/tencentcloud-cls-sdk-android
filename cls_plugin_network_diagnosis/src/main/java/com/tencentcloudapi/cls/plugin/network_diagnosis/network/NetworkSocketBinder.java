@@ -6,7 +6,6 @@ import android.net.ConnectivityManager;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.system.Os;
 
@@ -17,7 +16,6 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 
 import com.tencentcloudapi.cls.android.CLSLog;
-import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Utils;
 
 /**
  * NetworkSocketBinder实现类

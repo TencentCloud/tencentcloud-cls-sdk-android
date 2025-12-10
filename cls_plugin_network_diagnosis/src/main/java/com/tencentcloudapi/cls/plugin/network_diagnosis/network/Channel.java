@@ -420,40 +420,41 @@ public class Channel {
         }
 
         private static JSONObject getIpInfoNetwork(Network n) {
-//            try {
-////                String uri = "/geo?deviceId=" + Utils.getDeviceId() + "&appid=" + Utils.getTencentCloudAppId();
-//                String urlStr = "https://cls.tencentcloudapi.com" + uri;
-//                URL url = new URL(urlStr);
-//                HttpURLConnection conn;
-//                if (VERSION.SDK_INT >= 23) {
-//                    conn = (HttpURLConnection) n.openConnection(url);
-//                } else {
-//                    conn = (HttpURLConnection) url.openConnection();
-//                }
-//
-//                conn.setConnectTimeout(10000);
-//                conn.setReadTimeout(20000);
-//                conn.setUseCaches(false);
-//                conn.connect();
-//                int code = conn.getResponseCode();
-//                CLSLog.i(TAG, "getIpInfoNetwork code " + code);
-//                if (code == 200) {
-//                    InputStream in = conn.getInputStream();
-//                    byte[] buffer = new byte[10240];
-//                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//                    int len = 0;
-//
-//                    while ((len = in.read(buffer)) > 0) {
-//                        baos.write(buffer, 0, len);
-//                    }
-//
-//                    String returnValue = new String(baos.toByteArray(), StandardCharsets.UTF_8);
-//                    CLSLog.d(TAG, "getIpInfoNetwork: " + returnValue);
-//                    return new JSONObject(returnValue);
-//                }
-//            } catch (Exception e) {
-//                CLSLog.e(TAG, "getIpInfoNetwork exception: " + e.getMessage() + "\n" + e.toString());
-//            }
+            try {
+                String uri = "/geo?networkappid=" + Utils.getNetworkAppId() + "&appkey=" + Utils.getAppKey()+ "&uin=" + Utils.getUin();
+                String urlStr = Utils.getConfig().getEndpoint() + uri;
+                URL url = new URL(urlStr);
+                HttpURLConnection conn;
+                if (VERSION.SDK_INT >= 23) {
+                    conn = (HttpURLConnection) n.openConnection(url);
+                } else {
+                    conn = (HttpURLConnection) url.openConnection();
+                }
+
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(20000);
+                conn.setUseCaches(false);
+                conn.connect();
+                int code = conn.getResponseCode();
+                CLSLog.i(TAG, "getIpInfoNetwork code " + code);
+                if (code == 200) {
+                    InputStream in = conn.getInputStream();
+                    byte[] buffer = new byte[10240];
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    int len = 0;
+
+                    while ((len = in.read(buffer)) > 0) {
+                        baos.write(buffer, 0, len);
+                    }
+
+                    String returnValue = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+                    CLSLog.d(TAG, "getIpInfoNetwork: " + returnValue);
+                    JSONObject geoInfo = new JSONObject(returnValue);
+                    return (JSONObject) geoInfo.get("GeoInfo");
+                }
+            } catch (Exception e) {
+                CLSLog.e(TAG, "getIpInfoNetwork exception: " + e.getMessage() + "\n" + e.toString());
+            }
             return new JSONObject();
         }
 
@@ -502,7 +503,7 @@ public class Channel {
 
         private static synchronized void setIpInfo(Network n, JSONObject info) {
             String code = getNetworkDigest(n);
-            interfaceIPMap.put(code, info);
+            setIpInfoWithCode(code, info);
         }
 
         public static synchronized void setIpInfoWithCode(String code, JSONObject info) {
@@ -519,44 +520,7 @@ public class Channel {
             if (interfaceErrorMap.containsKey(code) && (Integer) interfaceErrorMap.get(code) > 5) {
                 return null;
             }
-//            String url = "https://hhhha.com" + "/geo?deviceId=" + Utils.getDeviceId() + "&ipaAppId=" + Utils.getTencentCloudAppId();
-//            String url = "";
-//            try {
-//                HttpURLConnection connection = (HttpURLConnection) n.openConnection(new URL(url));
-//                connection.setConnectTimeout(3000);
-//                connection.connect();
-//                if (connection.getResponseCode() == 200) {
-//                    byte[] buff = new byte[4096];
-//                    InputStream is = connection.getInputStream();
-//                    is.read(buff);
-//                    String result = new String(buff, StandardCharsets.UTF_8);
-//                    JSONObject o = new JSONObject(result);
-//                    JSONObject geo = o.getJSONObject("geo");
-//                    long ts = System.currentTimeMillis();
-//                    geo.put("ts", ts);
-//                    setIpInfo(n, geo);
-//                    if (Diagnosis.isCellularNetwork(ct)) {
-//                        interfaceIPMap.put("cellular", geo);
-//                    }
-//                    if (geo != null) {
-//                        String countryId = geo.optString("ip_country_id", "CN");
-//                        Utils.setCountryId(countryId);
-//                    }
-//                    interfaceErrorMap.remove(code);
-//                    return geo;
-//                }
-//            } catch (Throwable e) {
-//                CLSLog.e(TAG, "detectInterfaceIpInfo exception: " + e.getMessage() + "\n" + e.toString());
-//            }
-//
-//            if (interfaceErrorMap.containsKey(code)) {
-//                interfaceErrorMap.put(code, (Integer) interfaceErrorMap.get(code) + 1);
-//            } else {
-//                interfaceErrorMap.put(code, new Integer(1));
-//            }
-
-            return null;
-
+            return getIpInfoNetwork(n);
         }
 
         private static String getNetworkDigest(Network n) {
@@ -575,12 +539,24 @@ public class Channel {
                     info.put("get_ip_by_default", true);
                 }
                 if (geo != null) {
-                    info.put("client_ip", geo.getString("remote_addr"));
-                    info.put("country_id", geo.getString("ip_country_id"));
-                    info.put("isp_en", geo.getString("ip_isp_en"));
-                    info.put("city_en", geo.getString("ip_city_en"));
-                    info.put("province_en", geo.getString("ip_region_en"));
-                    info.put("country_en", geo.getString("ip_country_en"));
+                    if (geo.has("remote_addr")) {
+                        info.put("client_ip", geo.getString("remote_addr"));
+                    }
+                    if (geo.has("country_name")) {
+                        info.put("country_name", geo.getString("country_name"));
+                    }
+                    if (geo.has("country_code")) {
+                        info.put("country_code", geo.getString("country_code"));
+                    }
+                    if (geo.has("province_name")) {
+                        info.put("province_name", geo.getString("province_name"));
+                    }
+                    if (geo.has("city_name")) {
+                        info.put("city_name", geo.getString("city_name"));
+                    }
+                    if (geo.has("provider")) {
+                        info.put("provider", geo.getString("provider"));
+                    }
                 }
             } catch (Throwable e) {
                 CLSLog.e(TAG, "composeInfo exception: " + e.getMessage() + "\n" + e.toString());

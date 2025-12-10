@@ -9,9 +9,10 @@ import com.tencentcloudapi.cls.android.Credential;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.android.ClsDataAPI;
 import com.tencentcloudapi.cls.android.exceptions.InvalidDataException;
-import com.tencentcloudapi.cls.android.plugin.AbstractPlugin;
+import com.tencentcloudapi.cls.android.plugin.INetworkDiagnosisPlugin;
 import com.tencentcloudapi.cls.android.producer.common.LogItem;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.CLSNetworkDiagnosis;
+import com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.NetworkDiagnosisPlugin;
 
 
@@ -31,114 +32,101 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         singletonInit(this);
         try {
-            clsNetDiagnosisMTR(this);
+            clsDNSPing();
+            clsPing();
+            clsMTR();
+            clsHttpPing(this);
+            clsTcpPing();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
-
     public SSLContext getSSLContext(Context context) throws NoSuchAlgorithmException {
         return SSLContext.getDefault();
     }
 
+
     public void singletonInit(Context context) {
         ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
                 "https://ap-guangzhou-open.cls.tencentcs.com",
-                "88-46eea4769a05",
-                new Credential("", ""));
+                "a211",
+                new Credential("AK", "rX5"));
         clsConfigOptions.enableLog(true);
         clsConfigOptions.addTag("cls_android", "2.0.0");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
-        AbstractPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
+        INetworkDiagnosisPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
         clsNetDiagnosisPlugin.addCustomField("test", "tag");
+        clsNetDiagnosisPlugin.setAppCredentialToken("");
         ClsDataAPI.sharedInstance(context).
                 addPlugin(clsNetDiagnosisPlugin).
                 startPlugin(context);
     }
 
-    public void clsNetDiagnosisHttp(Context context) throws NoSuchAlgorithmException {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls", "custom field");
-        com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.HttpRequest request = new CLSNetworkDiagnosis.HttpRequest();
-        request.context = "<your http context id>";
+    public void clsHttpPing(Context context) throws NoSuchAlgorithmException {
+        CLSNetworkDiagnosis.HttpRequest request = new CLSNetworkDiagnosis.HttpRequest();
         request.headerOnly = true;
         request.downloadBytesLimit = 1024;
-//可选参数，证书检验回调。getSSLContext的配置参考下文。
-        request.credential = new com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.HttpCredential(getSSLContext(context), null);
-//可选参数，设置当次网络探测的扩展业务参数。
+        //可选参数，证书检验回调。getSSLContext的配置参考下文。
+        request.credential = new INetworkDiagnosis.HttpCredential(getSSLContext(context), null);
+        //可选参数，设置当次网络探测的扩展业务参数。
         request.extension = new HashMap<String, String>() {
             {
-                put("custom_key", "custom_value");
+                put("custom_field", "httpPing");
             }
         };
-
-        request.domain = "https://www.baidu.com";
+        request.domain = "https://ap-guangzhou.cls.tencentcs.com";
         CLSNetworkDiagnosis.getInstance().http(request);
     }
 
-    public void clsNetDiagnosisDNS(Context context) throws NoSuchAlgorithmException {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls", "custom field");
-        com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.DnsRequest request = new com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.DnsRequest();
-        request.context = "<your http context id>";
+    public void clsDNSPing() {
+        INetworkDiagnosis.DnsRequest request = new INetworkDiagnosis.DnsRequest();
         request.extension = new HashMap<String, String>() {
             {
-                put("custom_key", "custom_value");
+                put("custom_field", "dns");
             }
         };
-
         request.domain = "ap-guangzhou-open.cls.tencentcs.com";
         CLSNetworkDiagnosis.getInstance().dns(request);
     }
 
-    public void clsNetDiagnosisPing(Context context) throws NoSuchAlgorithmException {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls", "custom field");
-        com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.PingRequest request = new com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.PingRequest();
-        request.context = "<your http context id>";
+    public void clsPing() {
+        INetworkDiagnosis.PingRequest request = new INetworkDiagnosis.PingRequest();
         request.extension = new HashMap<String, String>() {
             {
-                put("custom_key", "custom_value");
+                put("custom_field", "ping");
             }
         };
-
-        request.domain = "www.baidu.com";
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
         CLSNetworkDiagnosis.getInstance().ping(request);
     }
 
-    public void clsNetDiagnosisMTR(Context context) throws NoSuchAlgorithmException {
+    public void clsMTR() {
         Map<String, String> customFiled = new LinkedHashMap<>();
         customFiled.put("cls", "custom field");
-        com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.MtrRequest request = new com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.MtrRequest();
-        request.context = "<your http context id>";
-        request.protocol = com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.MtrRequest.Protocol.UDP;
+        INetworkDiagnosis.MtrRequest request = new INetworkDiagnosis.MtrRequest();
+        request.protocol = INetworkDiagnosis.MtrRequest.Protocol.ICMP;
         request.extension = new HashMap<String, String>() {
             {
-                put("custom_key", "custom_value");
+                put("custom_field", "mtr");
             }
         };
-
         request.domain = "ap-guangzhou-open.cls.tencentcs.com";
         CLSNetworkDiagnosis.getInstance().mtr(request);
     }
 
-    public void clsNetDiagnosis() {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls", "custom field");
-        com.tencentcloudapi.cls.plugin.network_diagnosis.INetworkDiagnosis.TcpPingRequest request = new CLSNetworkDiagnosis.TcpPingRequest();
-        request.domain = "www.baidu.com";
-//可选参数。
-        request.multiplePortsDetect = true; //启用多网卡探测。
-//可选参数，设置当次网络探测的扩展业务参数。
+    public void clsTcpPing() {
+        INetworkDiagnosis.TcpPingRequest request = new INetworkDiagnosis.TcpPingRequest();
         request.extension = new HashMap<String, String>() {
             {
-                put("custom_key", "custom_value");
+                put("custom_field", "ping");
             }
         };
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
+        request.port = 80;
+        request.payload = "hello";
         CLSNetworkDiagnosis.getInstance().tcpPing(request);
     }
-
 
     public void sendLog(Context context) {
         LogItem logItem = new LogItem();

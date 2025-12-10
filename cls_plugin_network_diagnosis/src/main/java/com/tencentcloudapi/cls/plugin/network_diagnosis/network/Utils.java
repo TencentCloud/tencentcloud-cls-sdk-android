@@ -8,6 +8,7 @@ import android.provider.Settings.System;
 import android.util.Log;
 
 import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,9 +26,50 @@ import org.json.JSONObject;
 
 public class Utils {
     static Application mAapplication;
+    static String mNetworkAppId = "";
+    static String mAppKey = "";
+    static String mUin = "";
     private static String countryId = "CN";
     private static JSONObject policyGeo = null;
+
+    private static ClsConfigOptions mConfig;
     public Utils() {
+    }
+    static void storeConfig(ClsConfigOptions config) {
+        if (config != null) {
+            mConfig = config;
+        }
+    }
+    public static ClsConfigOptions getConfig() {
+        return mConfig;
+    }
+
+    static void storeNetworkAppIdId(String id) {
+        if (id != null && !id.equalsIgnoreCase("")) {
+            mNetworkAppId = id;
+        }
+    }
+    public static String getNetworkAppId() {
+        return mNetworkAppId;
+    }
+
+    static void storeAppKey(String key) {
+        if (key != null && !key.equalsIgnoreCase("")) {
+            mAppKey = key;
+        }
+    }
+
+    public static String getAppKey() {
+        return mAppKey;
+    }
+
+    static void storeUin(String uin) {
+        if (uin != null && !uin.equalsIgnoreCase("")) {
+            mUin = uin;
+        }
+    }
+    public static String getUin() {
+        return mUin;
     }
 
     static void storeApplication(Application application) {

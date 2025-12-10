@@ -1,27 +1,18 @@
 package com.tencentcloudapi.cls.plugin.network_diagnosis.network;
 
 
-
-import static com.tencentcloudapi.cls.plugin.network_diagnosis.network.SocketHelper.getSocketFileDescriptor;
-
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.net.Network;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
-import android.system.Os;
-
 import com.tencentcloudapi.cls.android.CLSLog;
+import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Channel.ConnectionType;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -39,9 +30,13 @@ public class Diagnosis {
     public Diagnosis() {
     }
 
-    public static void init(Context context) {
+    public static void init(Context context, String networkAppId, String appKey, String uin, ClsConfigOptions mConfig) {
         Application application = (Application) context.getApplicationContext();
         Utils.storeApplication(application);
+        Utils.storeNetworkAppIdId(networkAppId);
+        Utils.storeUin(uin);
+        Utils.storeAppKey(appKey);
+        Utils.storeConfig(mConfig);
         startTask();
     }
 

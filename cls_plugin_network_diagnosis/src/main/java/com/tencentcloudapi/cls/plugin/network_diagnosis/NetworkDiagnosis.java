@@ -3,6 +3,7 @@ package com.tencentcloudapi.cls.plugin.network_diagnosis;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.util.Base64;
 
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
@@ -40,7 +41,15 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
     private Context mContext;
     private Map<String, String> extensions = new LinkedHashMap<>();
 
-    protected void onPreInit(Context context, ClsConfigOptions mConfig, Map<String, String> ext) {
+    private String mToken;
+
+    private String mTopicId;
+
+    private String mNetworkAppId;
+    private String mAppKey;
+    private String mUin;
+
+    protected void onPreInit(Context context, ClsConfigOptions mConfig, Map<String, String> ext, String token, String topicId) {
         this.mContext = context;
         this.mConfig = mConfig;
         if (null != ext && !ext.isEmpty()) {
@@ -54,8 +63,36 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
                 CLSLog.printStackTrace(e);
             }
         }
+        if (null != token) {
+            this.mToken = token;
+            String t = new String(Base64.decode(token, Base64.DEFAULT));
+            try {
+                JSONObject tokenJson = new JSONObject(t);
+                if (tokenJson.has("topic_id")) {
+                    this.mTopicId = tokenJson.getString("topic_id");
+                }
+                if (tokenJson.has("n_a_id")) {
+                    this.mNetworkAppId = tokenJson.getString("n_a_id");
+                }
+                if (tokenJson.has("key")) {
+                    this.mAppKey = tokenJson.getString("key");
+                }
+                if (tokenJson.has("uin")) {
+                    this.mUin = tokenJson.getString("uin");
+                }
+            } catch (JSONException e) {
+                CLSLog.printStackTrace(e);
+            }
+
+        } else {
+            if (null != topicId) {
+                this.mTopicId = topicId;
+            }
+        }
+
+
         initializeDefaultSpanProvider(this.mContext);
-        Diagnosis.init(context);
+        Diagnosis.init(context, mNetworkAppId, mAppKey, mUin, this.mConfig);
         CLSNetworkDiagnosis.getInstance().setNetworkDiagnosis(this);
     }
 
@@ -106,7 +143,11 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
         span.setStart(startTime);
         span.end();
         try {
-            ClsDataAPI.sharedInstance(this.mContext).trackLog(span.toLogItem());
+            if (null != this.mTopicId && !this.mTopicId.isEmpty()) {
+                ClsDataAPI.sharedInstance(this.mContext).trackLog(this.mTopicId, span.toLogItem());
+            } else {
+                ClsDataAPI.sharedInstance(this.mContext).trackLog(span.toLogItem());
+            }
         } catch (Exception e) {
             CLSLog.printStackTrace(e);
         }
