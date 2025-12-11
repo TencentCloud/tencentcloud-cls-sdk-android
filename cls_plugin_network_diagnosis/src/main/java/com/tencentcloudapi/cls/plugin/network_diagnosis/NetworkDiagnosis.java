@@ -131,6 +131,7 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
         try {
             msg.put("method", method);
             msg.put("task_id", taskId);
+            msg.put("network_app_id", this.mNetworkAppId);
             msg.put("src", src);
             msg.put("userEx", new JSONObject(this.extensions));
             if (ext != null) {
@@ -291,7 +292,7 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
                     }
                 }
         );
-        
+
         if (null != request.payload && !request.payload.isEmpty()) {
             config.setPayload(request.payload);
         }

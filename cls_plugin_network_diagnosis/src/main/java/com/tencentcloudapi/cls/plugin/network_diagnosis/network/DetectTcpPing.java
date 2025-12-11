@@ -52,8 +52,12 @@ public class DetectTcpPing {
                         code = UnknownHost;
                     }
                     if (i == 0) {
+                        JSONObject o = new JSONObject();
+                        o.put("domain", config.domain);
+                        o.put("errCode", code);
+                        o.put("errMsg", e.getMessage());
                         // 返回结果
-                        return null;
+                        return o;
                     } else {
                         dropped++;
                     }
@@ -74,6 +78,14 @@ public class DetectTcpPing {
         } catch (UnknownHostException e) {
             CLSLog.printStackTrace(e);
             int code = UnknownHost;
+            try {
+                JSONObject o = new JSONObject();
+                o.put("domain", config.domain);
+                o.put("errCode", code);
+                o.put("errMsg", e.getMessage());
+                return o;
+            } catch (Exception ignored) {
+            }
         } catch (Exception e) {
            CLSLog.printStackTrace(e);
         }
