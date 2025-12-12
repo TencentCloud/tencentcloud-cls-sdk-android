@@ -198,36 +198,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void singletonInit(Context context) {
+     public void singletonInit(Context context) {
         ClsConfigOptions clsConfigOptions = new ClsConfigOptions(
-                "ap-guangzhou-open.cls.tencentcs.com",
-                "1",
-                new Credential("", ""));
+                "https://ap-guangzhou-open.cls.tencentcs.com",
+                "[日志主题id]",
+                new Credential("[secret_id]", "[secret_key]"));
         clsConfigOptions.enableLog(true);
+        clsConfigOptions.addTag("cls_android", "2.0.0");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
-        AbstractPlugin clsNetDiagnosisPlugin = new CLSNetDiagnosisPlugin();
+        INetworkDiagnosisPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
         clsNetDiagnosisPlugin.addCustomField("test", "tag");
+        clsNetDiagnosisPlugin.setAppCredentialToken("oiNWM4NmQxZGQtYWIyNi00ZmJhLTk3ZTMtNTRmNDZkMWZiZmRhIiwicmVnaW9uIjoiYXAtZ3Vhbmd6aG91LW9wZW4iLCJ0b3BpY19pZCI6ImJiNTA5NDYzLWFlZGEtNDgyZi1hZjg3LTc5NTAwN2Q5MjYzMSJ9");
         ClsDataAPI.sharedInstance(context).
                 addPlugin(clsNetDiagnosisPlugin).
                 startPlugin(context);
-    }
-
-    public void clsNetDiagnosis() {
-        Map<String, String> customFiled = new LinkedHashMap<>();
-        customFiled.put("cls","custom field");
-        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
-            }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
-            }
-        }, customFiled);
     }
 
 }
@@ -240,187 +225,80 @@ CLSConfig类定义了关键的配置字段
 ### CLSAdapter
 
 CLSAdapter类是插件的管理类。
+```agsl
 
-### Ping网络探测
-
-方法1：
-```
-/**
-     * @param domain   目标 host，如 cloud.tencent.com
-     * @param output   输出 callback
-     * @param callback 回调 callback
-     */
-    public void ping(String domain, Output output, Callback callback) {
-        this.ping(domain, 10, DEFAULT_PING_BYTES, output, callback);
+   public void clsHttpPing(Context context) throws NoSuchAlgorithmException {
+        CLSNetworkDiagnosis.HttpRequest request = new CLSNetworkDiagnosis.HttpRequest();
+        request.headerOnly = true;
+        request.downloadBytesLimit = 1024;
+        //可选参数，证书检验回调。getSSLContext的配置参考下文。
+        request.credential = new INetworkDiagnosis.HttpCredential(getSSLContext(context), null);
+        //可选参数，设置当次网络探测的扩展业务参数。
+        request.extension = new HashMap<String, String>() {
+            {
+                put("custom_field", "httpPing");
+            }
+        };
+        request.domain = "https://ap-guangzhou.cls.tencentcs.com";
+        CLSNetworkDiagnosis.getInstance().http(request);
     }
-```
 
-方法2：
+    public void clsDNSPing() {
+        INetworkDiagnosis.DnsRequest request = new INetworkDiagnosis.DnsRequest();
+        request.extension = new HashMap<String, String>() {
+            {
+                put("custom_field", "dns");
+            }
+        };
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
+        CLSNetworkDiagnosis.getInstance().dns(request);
+    }
 
-```
- /**
-     * @param domain   目标 host，如 cloud.tencent.com
-     * @param maxTimes 探测的次数
-     * @param size     探测包体积
-     * @param output   输出 callback
-     * @param callback 回调 callback
-     */
-    public void ping(String domain, int maxTimes, int size, Output output, Callback callback) {
-        Diagnosis.ping(domain, maxTimes, size, output, new Callback() {
+    public void clsPing() {
+        INetworkDiagnosis.PingRequest request = new INetworkDiagnosis.PingRequest();
+        request.extension = new HashMap<String, String>() {
+            {
+                put("custom_field", "ping");
+            }
+        };
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
+        CLSNetworkDiagnosis.getInstance().ping(request);
+    }
+
+    public void clsMTR() {
+        Map<String, String> customFiled = new LinkedHashMap<>();
+        customFiled.put("cls", "custom field");
+        INetworkDiagnosis.MtrRequest request = new INetworkDiagnosis.MtrRequest();
+        request.protocol = INetworkDiagnosis.MtrRequest.Protocol.ICMP;
+        request.extension = new HashMap<String, String>() {
+            {
+                put("custom_field", "mtr");
+            }
+        };
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
+        CLSNetworkDiagnosis.getInstance().mtr(request, new INetworkDiagnosis.Callback() {
             @Override
-            public void onComplete(String result) {
-                report(Type.PING, result, callback);
+            public void onComplete(INetworkDiagnosis.Response response) {
+                CLSLog.i("onComplete",response.content);
             }
         });
     }
-```
 
-调用接口:
-
-```
-        CLSNetDiagnosis.getInstance().ping("www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
+    public void clsTcpPing() {
+        INetworkDiagnosis.TcpPingRequest request = new INetworkDiagnosis.TcpPingRequest();
+        request.extension = new HashMap<String, String>() {
+            {
+                put("custom_field", "ping");
             }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("hh-----------h", String.format("ping result: %s", result));
-            }
-        });
-       
-```
-
-### TCPPing 网络探测
-
-方法1： 
-
-```
-    /**
-     * @param domain   目标 host，如：cloud.tencent.com
-     * @param port     目标端口，如：80
-     * @param output   输出 callback                
-     * @param callback 回调 callback
-     */
-    public void tcpPing(String domain, int port, Output output, Callback callback) {
-        this.tcpPing(domain, port, 10, DEFAULT_TIMEOUT, output, callback);
+        };
+        request.domain = "ap-guangzhou-open.cls.tencentcs.com";
+        request.port = 80;
+        request.payload = "hello";
+        CLSNetworkDiagnosis.getInstance().tcpPing(request);
     }
+
+
 ```
 
-方法2：
-
-```
-/**
-  * @param domain   目标 host，如：cloud.tencent.com
-  * @param port     目标端口，如：80
-  * @param maxTimes 探测的次数
-  * @param timeout  单次探测的超时时间
-  * @param output   输出 callback   
-  * @param callback 回调 callback
-  */
-public void tcpPing(String domain, int port, int maxTimes, int timeout, Output output, Callback callback) {
-    Diagnosis.tcpPing(domain, port, maxTimes, timeout, output, new Callback() {
-         @Override
-         public void onComplete(String result) {
-             report(Type.TCPPING, result, callback);
-         }
-    });
-}
-```
-
-调用方法：
-
-```
-        CLSNetDiagnosis.getInstance().tcpPing("www.tencentcloud.com", 80, new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
-            }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("hh-----------h", String.format("ping result: %s", result));
-            }
-        });
-```
-
-### TraceRoute 网络探测
-
-
-方法1：
-
-```
-    /**
-     * @param domain 目标 host，如：cloud.tencent.com
-     * @param output 输出 callback
-     * @param callback 回调 callback
-     */
-    public void traceroute(String domain, Output output, Callback callback) {
-        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), new Callback() {
-            @Override
-            public void onComplete(String result) {
-                report(Type.TRACEROUTE, result, callback);
-            }
-        }, output);
-        traceroute(traceroute);
-    }
-```
-
-方法2: 
-
-```
-    /**
-     *
-     * @param domain 目标 host，如：cloud.tencent.com
-     * @param maxHop
-     * @param countPerRoute
-     * @param output   输出 callback
-     * @param callback 回调 callback
-     */
-    public void traceroute(String domain, int maxHop, int countPerRoute, Output output, Callback callback) {
-        Traceroute.Config config =  new Traceroute.Config(domain);
-        config.setMaxHop(maxHop);
-        config.setCountPerRoute(countPerRoute);
-        Traceroute traceroute = new Traceroute(new Traceroute.Config(domain), callback, output);
-        traceroute(traceroute);
-    }
-```
-
-调用方法：
-
-```
-        CLSNetDiagnosis.getInstance().traceroute("www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
-            }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("TraceRoute", String.format("traceRoute result: %s", result));
-            }
-        });
-```
-
-### HttpPing网络探测
-
-```
-CLSNetDiagnosis.getInstance().httpPing("https://www.tencentcloud.com",  new CLSNetDiagnosis.Output(){
-            @Override
-            public void write(String line) {
-                System.out.println(line);
-            }
-        }, new CLSNetDiagnosis.Callback() {
-            @Override
-            public void onComplete(String result) {
-                // result为探测结果，JSON格式。
-                CLSLog.d("HttpPing", String.format("traceRoute result: %s", result));
-            }
-        });
-```
 
 
