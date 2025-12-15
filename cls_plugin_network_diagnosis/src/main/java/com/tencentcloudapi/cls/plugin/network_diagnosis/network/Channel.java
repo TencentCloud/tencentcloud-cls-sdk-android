@@ -430,7 +430,6 @@ public class Channel {
                 } else {
                     conn = (HttpURLConnection) url.openConnection();
                 }
-
                 conn.setConnectTimeout(10000);
                 conn.setReadTimeout(20000);
                 conn.setUseCaches(false);

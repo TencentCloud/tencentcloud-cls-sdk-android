@@ -13,6 +13,7 @@ import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Channel.Connecti
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -300,12 +301,16 @@ public class Diagnosis {
             startDetect(new DetectionFunc() {
                 public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
                     DnsConfig config = (DnsConfig)oConfig;
-                    if (config.type == null) {
+                    if (null == config.type) {
                         config.type = "A";
                     }
                     Object dnsServers = null;
                     try {
-                        if (netInfo.has("dns")) {
+                        if (null != config.server && !config.server.isEmpty()) {
+                            ArrayList<String> dnsList = new ArrayList<>();
+                            dnsList.add(config.server);
+                            dnsServers = dnsList;
+                        } else if (netInfo.has("dns")) {
                             String dnsString = netInfo.getString("dns");
                             dnsServers = Utils.parseDnsStringToJsonArray(dnsString);
                         }
@@ -325,7 +330,7 @@ public class Diagnosis {
                                 config.domain,
                                 dnsServers,
                                 config.timeout,
-                                Objects.equals(config.type, "A") ? 2 : 3,// prefer: 2=IPv4 only, 3=IPv6 only
+                                Objects.equals(config.type, "A") ? 2 : 3,// prefer: 2=IPv4 only, 0=IPv4优先
                                 binder      // SocketBinder回调接口（可以为null，networkId由binder内部管理）
                         );
 
