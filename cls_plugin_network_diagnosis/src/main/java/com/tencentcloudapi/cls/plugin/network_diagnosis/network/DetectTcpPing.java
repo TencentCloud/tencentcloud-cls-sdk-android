@@ -157,9 +157,9 @@ public class DetectTcpPing {
             o.put("count", config.maxTimes);
             o.put("interface", connectionType);
             o.put("loss",  String.format("%.2f", (float) dropped / (float) config.maxTimes));
-            o.put("max", String.format("%.2f", max));
-            o.put("min", String.format("%.2f", min));
-            o.put("avg", String.format("%.2f", sum / (index + 1)));
+            o.put("latency_max", String.format("%.2f", max));
+            o.put("latency_min", String.format("%.2f", min));
+            o.put("latency", String.format("%.2f", sum / (index + 1)));
             o.put("stddev", String.format("%.2f", stddev));
             o.put("total", String.format("%.2f", sum));
             o.put("responseNum", config.maxTimes - dropped);
