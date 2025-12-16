@@ -374,7 +374,10 @@ public class Diagnosis {
                         );
                         JSONObject resultJson = new JSONObject(value);
                         resultJson.put("netInfo", netInfo);
-                        resultJson.put("interface", connectionType);
+                        resultJson.put("host", config.domain);
+                        resultJson.put("max_paths", config.maxPaths);
+                        resultJson.put("type", config.protocol);
+//                        resultJson.put("interface", connectionType);
                         config.callback.onComplete(resultJson);
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse MTR result: " + e.getMessage());
