@@ -45,7 +45,7 @@ public class Diagnosis {
 
     private static native String DnsDetect(String domain, Object dnsServers, int timeout, int prefer, SocketBinder binder);
 
-    private static native String MtrDetect(String target, String protocol, int maxTtl, int timeout, int times, int prefer, SocketBinder binder);
+    private static native String MtrDetect(String target, String protocol, int maxTtl, int timeout, int times, int prefer, String interface_name, SocketBinder binder);
 
     private static boolean loadLib() {
         try {
@@ -370,6 +370,7 @@ public class Diagnosis {
                                 config.timeout,
                                 config.maxTimes,
                                 0,  // prefer: 0=IPv4优先
+                                connectionType,
                                 binder
                         );
                         JSONObject resultJson = new JSONObject(value);
