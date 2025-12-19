@@ -7,11 +7,14 @@ import android.content.Context;
 import android.net.Network;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+
 import com.tencentcloudapi.cls.android.CLSLog;
 import com.tencentcloudapi.cls.android.ClsConfigOptions;
 import com.tencentcloudapi.cls.plugin.network_diagnosis.network.Channel.ConnectionType;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -80,26 +83,26 @@ public class Diagnosis {
         if (!mInvited) {
             (new Thread(new Runnable() {
                 public void run() {
-                    while(true) {
+                    while (true) {
                         DetectConfig config = Diagnosis.configQueue.poll();
                         if (config == null) {
                             Diagnosis.sleep(100);
                         } else {
                             try {
                                 if (config instanceof TcpPingConfig) {
-                                    TcpPingConfig tcpPingConfig = (TcpPingConfig)config;
+                                    TcpPingConfig tcpPingConfig = (TcpPingConfig) config;
                                     Diagnosis.startTcpPingInner(tcpPingConfig);
                                 } else if (config instanceof PingConfig) {
-                                    PingConfig pingConfig = (PingConfig)config;
+                                    PingConfig pingConfig = (PingConfig) config;
                                     Diagnosis.statPingInner(pingConfig);
                                 } else if (config instanceof DnsConfig) {
-                                    DnsConfig dnsConfig = (DnsConfig)config;
+                                    DnsConfig dnsConfig = (DnsConfig) config;
                                     Diagnosis.statDnsInner(dnsConfig);
                                 } else if (config instanceof HttpConfig) {
-                                    HttpConfig httpConfig = (HttpConfig)config;
+                                    HttpConfig httpConfig = (HttpConfig) config;
                                     Diagnosis.startHttpPingInner(httpConfig);
                                 } else if (config instanceof MtrConfig) {
-                                    MtrConfig mtrConfig = (MtrConfig)config;
+                                    MtrConfig mtrConfig = (MtrConfig) config;
                                     Diagnosis.startMtrInner(mtrConfig);
                                 } else {
                                     CLSLog.d(Diagnosis.TAG, "detection config mismatch");
@@ -127,76 +130,76 @@ public class Diagnosis {
 
     @SuppressLint({"NewApi"})
     private static void startDetect(final DetectionFunc func, final Object config, String taskId) {
-            try {
-                if (taskId == null || taskId.isEmpty()) {
-                    taskId = UUID.randomUUID().toString();
-                }
-                if (Build.VERSION.SDK_INT < 23) {
-                    Channel.ConnectivityManagerDelegate cmd = new Channel.ConnectivityManagerDelegate(Utils.getApplication().getApplicationContext());
-                    Channel.NetworkState netState = cmd.getNetworkStateBak();
-                    Channel.ConnectionType ctype = Channel.getConnectionType(netState.isConnected(), netState.getNetworkType(), netState.getNetworkSubType());
-                    JSONObject netInfo = cmd.getNetInfoBak();
-                    OverLayDetect(func, taskId, Channel.stringConnectionType(ctype), null, netInfo, config, -1L, "");
-                } else {
-                    boolean hasCellular = false;
-                    final Channel.ConnectivityManagerDelegate cmd = new Channel.ConnectivityManagerDelegate(Utils.getApplication().getApplicationContext());
-                    Channel.NetworkState networkState = cmd.getNetworkState();
-                    Channel.ConnectionType connectionType = Channel.getConnectionType(networkState.isConnected(), networkState.getNetworkType(), networkState.getNetworkSubType());
-                    DetectConfig dc = (DetectConfig)config;
-                    if (dc.multiplePortsDetect && !isCellularNetwork(connectionType)) {
-                        Network[] nets = Channel.getAllNetworks();
-                        if (nets.length == 0) {
-                            directCallback((DetectConfig)config, -9004, "NONE valid Network");
-                        } else {
-                            int detectNetworkNum = 0;
-                            for(Network n : nets) {
-                                Channel.NetworkState ns = cmd.getNetworkState(n);
-                                Channel.ConnectionType ct = Channel.getConnectionType(ns.isConnected(), ns.getNetworkType(), ns.getNetworkSubType());
-                                long netId = Channel.networkToNetId(n);
-                                String interfaceName = cmd.getInterfaceName(n);
-                                if (!cmd.hasInternetCapability(n)) {
-                                    CLSLog.d(TAG, "not has internet capability");
+        try {
+            if (taskId == null || taskId.isEmpty()) {
+                taskId = UUID.randomUUID().toString();
+            }
+            if (Build.VERSION.SDK_INT < 23) {
+                Channel.ConnectivityManagerDelegate cmd = new Channel.ConnectivityManagerDelegate(Utils.getApplication().getApplicationContext());
+                Channel.NetworkState netState = cmd.getNetworkStateBak();
+                Channel.ConnectionType ctype = Channel.getConnectionType(netState.isConnected(), netState.getNetworkType(), netState.getNetworkSubType());
+                JSONObject netInfo = cmd.getNetInfoBak();
+                OverLayDetect(func, taskId, Channel.stringConnectionType(ctype), null, netInfo, config, -1L, "");
+            } else {
+                boolean hasCellular = false;
+                final Channel.ConnectivityManagerDelegate cmd = new Channel.ConnectivityManagerDelegate(Utils.getApplication().getApplicationContext());
+                Channel.NetworkState networkState = cmd.getNetworkState();
+                Channel.ConnectionType connectionType = Channel.getConnectionType(networkState.isConnected(), networkState.getNetworkType(), networkState.getNetworkSubType());
+                DetectConfig dc = (DetectConfig) config;
+                if (dc.multiplePortsDetect && !isCellularNetwork(connectionType)) {
+                    Network[] nets = Channel.getAllNetworks();
+                    if (nets.length == 0) {
+                        directCallback((DetectConfig) config, -9004, "NONE valid Network");
+                    } else {
+                        int detectNetworkNum = 0;
+                        for (Network n : nets) {
+                            Channel.NetworkState ns = cmd.getNetworkState(n);
+                            Channel.ConnectionType ct = Channel.getConnectionType(ns.isConnected(), ns.getNetworkType(), ns.getNetworkSubType());
+                            long netId = Channel.networkToNetId(n);
+                            String interfaceName = cmd.getInterfaceName(n);
+                            if (!cmd.hasInternetCapability(n)) {
+                                CLSLog.d(TAG, "not has internet capability");
+                            } else {
+                                if (ct == ConnectionType.CONNECTION_WIFI) {
+                                    netId = -1L;
+                                } else if (ct != ConnectionType.CONNECTION_VPN && ct != ConnectionType.CONNECTION_ETHERNET) {
+                                    if (ct != ConnectionType.CONNECTION_2G && ct != ConnectionType.CONNECTION_3G && ct != ConnectionType.CONNECTION_4G && ct != ConnectionType.CONNECTION_5G && ct != ConnectionType.CONNECTION_UNKNOWN_CELLULAR) {
+                                        continue;
+                                    }
+                                    hasCellular = true;
+                                }
+                                if (!ns.isConnected()) {
+                                    CLSLog.w(TAG, "startDetect connection type " + ct + " is not active");
                                 } else {
-                                    if (ct == ConnectionType.CONNECTION_WIFI) {
-                                        netId = -1L;
-                                    } else if (ct != ConnectionType.CONNECTION_VPN && ct != ConnectionType.CONNECTION_ETHERNET) {
-                                        if (ct != ConnectionType.CONNECTION_2G && ct != ConnectionType.CONNECTION_3G && ct != ConnectionType.CONNECTION_4G && ct != ConnectionType.CONNECTION_5G && ct != ConnectionType.CONNECTION_UNKNOWN_CELLULAR) {
-                                            continue;
-                                        }
-                                        hasCellular = true;
-                                    }
-                                    if (!ns.isConnected()) {
-                                        CLSLog.w(TAG, "startDetect connection type " + ct + " is not active");
-                                    } else {
-                                        String ctType = Channel.stringConnectionType(ct);
-                                        JSONObject netInfo = cmd.getNetInfo(n, netId);
-                                        netInfo.put("dns", cmd.getDnsServers(n));
-                                        OverLayDetect(func, taskId, ctType, n, netInfo, config, netId, interfaceName);
-                                        ++detectNetworkNum;
-                                    }
+                                    String ctType = Channel.stringConnectionType(ct);
+                                    JSONObject netInfo = cmd.getNetInfo(n, netId);
+                                    netInfo.put("dns", cmd.getDnsServers(n));
+                                    OverLayDetect(func, taskId, ctType, n, netInfo, config, netId, interfaceName);
+                                    ++detectNetworkNum;
                                 }
                             }
-
-                            if (0 == detectNetworkNum) {
-                                CLSLog.w(TAG, "all network are invalid");
-                                directCallback((DetectConfig)config, -9004, "all network are invalid");
-                            }
                         }
-                    } else {
-                        if (cmd.getDefaultNetId() == -1L) {
-                            directCallback(dc, -9004, "current network NONE");
-                        } else {
-                            Network network = cmd.getDefaultNetwork();
-                            long netId = cmd.getDefaultNetId();
-                            JSONObject netInfo = cmd.getNetInfo(network, netId);
-                            netInfo.put("dns", cmd.getDnsServers(network));
-                            OverLayDetect(func, taskId, Channel.stringConnectionType(connectionType), network, netInfo, config, netId, cmd.getInterfaceName(network));
+
+                        if (0 == detectNetworkNum) {
+                            CLSLog.w(TAG, "all network are invalid");
+                            directCallback((DetectConfig) config, -9004, "all network are invalid");
                         }
                     }
+                } else {
+                    if (cmd.getDefaultNetId() == -1L) {
+                        directCallback(dc, -9004, "current network NONE");
+                    } else {
+                        Network network = cmd.getDefaultNetwork();
+                        long netId = cmd.getDefaultNetId();
+                        JSONObject netInfo = cmd.getNetInfo(network, netId);
+                        netInfo.put("dns", cmd.getDnsServers(network));
+                        OverLayDetect(func, taskId, Channel.stringConnectionType(connectionType), network, netInfo, config, netId, cmd.getInterfaceName(network));
+                    }
                 }
-            } catch (Throwable e) {
-                CLSLog.e(TAG, "startDetect exception: " + e.getMessage());
             }
+        } catch (Throwable e) {
+            CLSLog.e(TAG, "startDetect exception: " + e.getMessage());
+        }
     }
 
 
@@ -204,18 +207,22 @@ public class Diagnosis {
     public static void startPing(DetectConfig config) {
         configQueue.add(config);
     }
+
     @SuppressLint({"NewApi"})
     public static void startTcpPing(DetectConfig config) {
         configQueue.offer(config);
     }
+
     @SuppressLint({"NewApi"})
     public static void startHttpPing(DetectConfig config) {
         configQueue.add(config);
     }
+
     @SuppressLint({"NewApi"})
     public static void startMtr(DetectConfig config) {
         configQueue.add(config);
     }
+
     @SuppressLint({"NewApi"})
     public static void startDns(DetectConfig config) {
         configQueue.add(config);
@@ -226,7 +233,7 @@ public class Diagnosis {
         config.domain = fixDomain(config.domain);
         startDetect(new DetectionFunc() {
             public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                HttpConfig config = (HttpConfig)oConfig;
+                HttpConfig config = (HttpConfig) oConfig;
                 JSONObject res = new DetectHttpPing().doDetectHttpPing(taskId, connectionType, network, netInfo, config);
                 config.callback.onComplete(res);
             }
@@ -238,7 +245,7 @@ public class Diagnosis {
         config.domain = fixDomain(config.domain);
         startDetect(new DetectionFunc() {
             public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                TcpPingConfig config = (TcpPingConfig)oConfig;
+                TcpPingConfig config = (TcpPingConfig) oConfig;
                 JSONObject res = new DetectTcpPing().doDetectTcpPing(taskId, connectionType, network, netInfo, config);
                 config.callback.onComplete(res);
             }
@@ -300,7 +307,7 @@ public class Diagnosis {
             config.domain = fixDomain(config.domain);
             startDetect(new DetectionFunc() {
                 public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                    DnsConfig config = (DnsConfig)oConfig;
+                    DnsConfig config = (DnsConfig) oConfig;
                     if (null == config.type) {
                         config.type = "A";
                     }
@@ -356,30 +363,39 @@ public class Diagnosis {
             config.domain = fixDomain(config.domain);
             startDetect(new DetectionFunc() {
                 public void detection(String taskId, String connectionType, Network network, JSONObject netInfo, Object oConfig, long netId, String interfaceName) {
-                    MtrConfig config = (MtrConfig)oConfig;
+                    MtrConfig config = (MtrConfig) oConfig;
                     SocketBinder binder = null;
                     try {
                         // 如果提供了Network对象，创建binder（networkId由binder内部管理）
                         if (null != network) {
                             binder = new NetworkSocketBinder(network, interfaceName);
                         }
-                        String value = Diagnosis.MtrDetect(
-                                config.domain,
-                                config.protocol,
-                                config.maxTtl,
-                                config.timeout,
-                                config.maxTimes,
-                                0,  // prefer: 0=IPv4优先
-                                connectionType,
-                                binder
-                        );
-                        JSONObject resultJson = new JSONObject(value);
-                        resultJson.put("netInfo", netInfo);
-                        resultJson.put("host", config.domain);
-                        resultJson.put("max_paths", config.maxPaths);
-                        resultJson.put("type", config.protocol);
+                        String[] protocols;
+                        if (Objects.equals(config.protocol, "all")) {
+                            protocols = new String[]{"udp", "icmp"};
+                        } else {
+                            protocols = new String[]{config.protocol};
+                        }
+                        for (String protocol : protocols) {
+                            String value = Diagnosis.MtrDetect(
+                                    config.domain,
+                                    protocol,
+                                    config.maxTtl,
+                                    config.timeout,
+                                    config.maxTimes,
+                                    0,  // prefer: 0=IPv4优先
+                                    connectionType,
+                                    binder
+                            );
+                            JSONObject resultJson = new JSONObject(value);
+                            resultJson.put("netInfo", netInfo);
+                            resultJson.put("host", config.domain);
+                            resultJson.put("max_paths", config.maxPaths);
+                            resultJson.put("type", protocol);
 //                        resultJson.put("interface", connectionType);
-                        config.callback.onComplete(resultJson);
+                            config.callback.onComplete(resultJson);
+
+                        }
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse MTR result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
@@ -391,6 +407,7 @@ public class Diagnosis {
             }, config, config.taskId);
         }
     }
+
     private static String fixDomain(String domain) {
         if (domain != null && domain.contains(":")) {
             String[] array = domain.split(":");
