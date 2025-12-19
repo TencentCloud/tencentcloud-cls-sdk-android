@@ -165,7 +165,6 @@ public interface INetworkDiagnosis {
 
         public int maxTTL = DEFAULT_MTR_MAX_TTL;
         public int maxPaths = DEFAULT_MTR_MAX_PATH;
-        public int proto = 1;
         public Protocol protocol = Protocol.ALL;
     }
 
