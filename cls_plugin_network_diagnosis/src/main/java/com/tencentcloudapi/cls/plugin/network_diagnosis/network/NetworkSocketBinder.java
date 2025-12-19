@@ -25,7 +25,7 @@ import com.tencentcloudapi.cls.android.CLSLog;
 @SuppressLint({"NewApi"})
 public class NetworkSocketBinder implements SocketBinder {
     private static final String TAG = NetworkSocketBinder.class.getCanonicalName();
-    
+
     private final Network network;
     private final String interfaceName;
 
@@ -49,12 +49,12 @@ public class NetworkSocketBinder implements SocketBinder {
 
             // 获取网卡对应的IP地址
             if (isIpv6) {
-                boundInetAddress = getNetworkInetAddress(network, interfaceName);
+                boundInetAddress = getIPv6Address(network, interfaceName);
             } else {
                 // 对于IPv4，优先获取IPv4地址
                 boundInetAddress = getIPv4Address(network, interfaceName);
                 if (null == boundInetAddress) {
-                    boundInetAddress = getNetworkInetAddress(network, interfaceName);
+                    boundInetAddress = getIPv6Address(network, interfaceName);
                 }
             }
             if (null == boundInetAddress) {
@@ -116,37 +116,37 @@ public class NetworkSocketBinder implements SocketBinder {
     }
 
     /**
-     * 获取网络对应的IP地址
+     * 获取网络对应的IPv6地址
      */
-    private static InetAddress getNetworkInetAddress(Network network, String interfaceName) {
+    private static InetAddress getIPv6Address(Network network, String interfaceName) {
         try {
-            // 方法1：通过LinkProperties
+            // 方法1：通过LinkProperties查找IPv6地址
             ConnectivityManager cm = (ConnectivityManager) Utils.getApplication().getSystemService(Context.CONNECTIVITY_SERVICE);
             LinkProperties linkProperties = cm.getLinkProperties(network);
             if (linkProperties != null) {
                 for (LinkAddress linkAddress : linkProperties.getLinkAddresses()) {
                     InetAddress address = linkAddress.getAddress();
-                    if (!address.isLoopbackAddress()) {
+                    if (!address.isLoopbackAddress() && address.getAddress().length == 16) {
                         return address;
                     }
                 }
             }
 
-            // 方法2：通过接口名称
+            // 方法2：通过接口名称查找IPv6地址
             if (interfaceName != null && !interfaceName.isEmpty()) {
                 NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
                 if (networkInterface != null) {
                     Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
                     while (addresses.hasMoreElements()) {
                         InetAddress address = addresses.nextElement();
-                        if (!address.isLoopbackAddress()) {
+                        if (!address.isLoopbackAddress() && address.getAddress().length == 16) {
                             return address;
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            CLSLog.e(TAG, "Failed to get network IP: " + e.getMessage());
+            CLSLog.e(TAG, "Failed to get IPv6 address: " + e.getMessage());
         }
         return null;
     }
