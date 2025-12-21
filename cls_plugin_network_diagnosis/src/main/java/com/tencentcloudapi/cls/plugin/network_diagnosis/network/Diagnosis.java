@@ -314,9 +314,7 @@ public class Diagnosis {
                     Object dnsServers = null;
                     try {
                         if (null != config.server && !config.server.isEmpty()) {
-                            ArrayList<String> dnsList = new ArrayList<>();
-                            dnsList.add(config.server);
-                            dnsServers = dnsList;
+                            dnsServers = Utils.parseDnsStringToJsonArray(config.server);
                         } else if (netInfo.has("dns")) {
                             String dnsString = netInfo.getString("dns");
                             dnsServers = Utils.parseDnsStringToJsonArray(dnsString);
