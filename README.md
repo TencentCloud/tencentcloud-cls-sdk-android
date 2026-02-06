@@ -5,7 +5,7 @@
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.1')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.0')
 ```
 ### 密钥信息
 
@@ -93,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
 您需要在Android Studio工程对应模块下的build.gradle文件中增加以下依赖。
 
 ```
-    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '2.0.2')
-    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '2.0.2')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '3.0.0')
+    implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.0')
 ```
 
 接入Android应用的网络数据所涉及的依赖包说明如下表所示。
@@ -204,12 +204,12 @@ public class MainActivity extends AppCompatActivity {
                 "[日志主题id]",
                 new Credential("[secret_id]", "[secret_key]"));
         clsConfigOptions.enableLog(true);
-        clsConfigOptions.addTag("cls_android", "2.0.0");
+        clsConfigOptions.addTag("cls_android", "3.0.0");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
         INetworkDiagnosisPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
         clsNetDiagnosisPlugin.addCustomField("test", "tag");
-        clsNetDiagnosisPlugin.setAppCredentialToken("oiNWM4NmQxZGQtYWIyNi00ZmJhLTk3ZTMtNTRmNDZkMWZiZmRhIiwicmVnaW9uIjoiYXAtZ3Vhbmd6aG91LW9wZW4iLCJ0b3BpY19pZCI6ImJiNTA5NDYzLWFlZGEtNDgyZi1hZjg3LTc5NTAwN2Q5MjYzMSJ9");
+        clsNetDiagnosisPlugin.setAppCredentialToken("[可以从 cls 服务端获取移动端接入 token]");
         ClsDataAPI.sharedInstance(context).
                 addPlugin(clsNetDiagnosisPlugin).
                 startPlugin(context);

@@ -38,7 +38,7 @@ public class Resource {
         DEFAULT.add("host.name", Build.HOST);
         DEFAULT.add("host.type", Build.TYPE);
         DEFAULT.add("host.arch", Build.CPU_ABI + (TextUtils.isEmpty(Build.CPU_ABI2) ? "" : (", " + Build.CPU_ABI2)));
-        DEFAULT.add("cls.sdk.version", "2.0.0");
+        DEFAULT.add("cls.sdk.version", "3.0.0");
     }
 
     Resource() {

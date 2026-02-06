@@ -257,7 +257,7 @@ public class EventMessages {
             if (!mClsConfigOptions.getCredential().getToken().isEmpty()) {
                 headParameter.put("X-Cls-Token", mClsConfigOptions.getCredential().getToken());
             }
-            headParameter.put("User-Agent", "cls-android-sdk-2.0.0");
+            headParameter.put("User-Agent", "cls-android-sdk-3.0.0");
             // do send http reuqest
             sendHttpRequest(mClsConfigOptions.getEndpoint()+Constants.UPLOAD_LOG_RESOURCE_URI+"?topic_id="+topic, compressedData, headParameter);
         }catch (ConnectErrorException e) {
