@@ -361,29 +361,48 @@ private void initCls(Context context) {
 
 ```java
 public void clsHttpPing(Context context) throws NoSuchAlgorithmException {
-    CLSNetworkDiagnosis.HttpRequest request = new CLSNetworkDiagnosis.HttpRequest();
+    INetworkDiagnosis.HttpRequest request = new INetworkDiagnosis.HttpRequest();
     request.domain = "https://ap-guangzhou.cls.tencentcs.com"; // 必填：目标 URL
+    request.ip = "1.2.3.4";                                    // 可选：指定目标 IP（绕过 DNS）
     request.headerOnly = true;                                  // 可选：仅获取响应头（默认 false）
-    request.downloadBytesLimit = 1024;                          // 可选：限制下载字节数
-    // 可选：SSL 证书校验回调
+    request.downloadBytesLimit = 1024;                          // 可选：限制下载字节数（默认 64KB）
+    request.timeout = 30 * 1000;                                // 可选：超时时间，单位毫秒（默认 30000ms）
+    request.maxTimes = 3;                                       // 可选：探测次数（默认 10）
+    request.multiplePortsDetect = false;                        // 可选：是否多端口探测（默认 true）
+    // 可选：SSL 证书校验配置
     request.credential = new INetworkDiagnosis.HttpCredential(getSSLContext(context), null);
     // 可选：自定义扩展字段
     request.extension = new HashMap<String, String>() {{
         put("custom_field", "httpPing");
     }};
+    // 不带回调
     CLSNetworkDiagnosis.getInstance().http(request);
+    // 带回调
+    CLSNetworkDiagnosis.getInstance().http(request, new INetworkDiagnosis.Callback() {
+        @Override
+        public void onComplete(INetworkDiagnosis.Response response) {
+            CLSLog.i("HTTP", response.content);
+        }
+    });
 }
 ```
 
 **HttpRequest 参数说明：**
 
-| 字段 | 类型 | 是否必填 | 说明 |
-|------|------|----------|------|
-| `domain` | `String` | 必填 | 目标 URL，需包含协议头 |
-| `headerOnly` | `boolean` | 可选 | 是否只请求响应头，默认 `false` |
-| `downloadBytesLimit` | `int` | 可选 | 限制下载字节数，0 表示不限制 |
-| `credential` | `HttpCredential` | 可选 | SSL 证书校验配置 |
-| `extension` | `Map<String, String>` | 可选 | 自定义扩展字段，随结果一起上报 |
+> `HttpRequest` 继承自 `PingRequest`，包含以下所有字段：
+
+| 字段 | 类型 | 默认值 | 是否必填 | 说明 |
+|------|------|--------|----------|------|
+| `domain` | `String` | — | 必填 | 目标 URL，需包含协议头（`http://` 或 `https://`） |
+| `ip` | `String` | `null` | 可选 | 指定目标 IP，设置后跳过 DNS 解析直接连接 |
+| `headerOnly` | `boolean` | `false` | 可选 | 是否只请求响应头 |
+| `downloadBytesLimit` | `int` | `65536`（64KB） | 可选 | 限制下载字节数，0 表示不限制 |
+| `credential` | `HttpCredential` | `null` | 可选 | SSL 证书校验配置，含 `SSLContext` 和 `X509TrustManager` |
+| `timeout` | `int`（毫秒） | `30000`（30秒） | 可选 | 请求超时时间 |
+| `maxTimes` | `int` | `10` | 可选 | 探测次数 |
+| `size` | `int`（byte） | `64` | 可选 | 探测包大小 |
+| `multiplePortsDetect` | `boolean` | `true` | 可选 | 是否启用多端口探测 |
+| `extension` | `Map<String, String>` | `null` | 可选 | 自定义扩展字段，随结果一起上报 |
 
 ---
 
@@ -395,19 +414,37 @@ public void clsHttpPing(Context context) throws NoSuchAlgorithmException {
 public void clsDNSPing() {
     INetworkDiagnosis.DnsRequest request = new INetworkDiagnosis.DnsRequest();
     request.domain = "ap-guangzhou-open.cls.tencentcs.com"; // 必填：目标域名
+    request.type = INetworkDiagnosis.DNS_TYPE_IPv4;          // 可选：DNS 类型，"A"（IPv4）或 "AAAA"（IPv6），默认 "A"
+    request.nameServer = "8.8.8.8";                          // 可选：指定 DNS 服务器地址
+    request.timeout = 2000;                                  // 可选：超时时间，单位毫秒（默认 2000ms）
     request.extension = new HashMap<String, String>() {{
         put("custom_field", "dns");
     }};
+    // 不带回调
     CLSNetworkDiagnosis.getInstance().dns(request);
+    // 带回调
+    CLSNetworkDiagnosis.getInstance().dns(request, new INetworkDiagnosis.Callback() {
+        @Override
+        public void onComplete(INetworkDiagnosis.Response response) {
+            CLSLog.i("DNS", response.content);
+        }
+    });
 }
 ```
 
 **DnsRequest 参数说明：**
 
-| 字段 | 类型 | 是否必填 | 说明 |
-|------|------|----------|------|
-| `domain` | `String` | 必填 | 目标域名 |
-| `extension` | `Map<String, String>` | 可选 | 自定义扩展字段 |
+> `DnsRequest` 继承自 `PingRequest`，包含以下所有字段：
+
+| 字段 | 类型 | 默认值 | 是否必填 | 说明 |
+|------|------|--------|----------|------|
+| `domain` | `String` | — | 必填 | 目标域名 |
+| `type` | `String` | `"A"` | 可选 | DNS 查询类型：`"A"`（IPv4）或 `"AAAA"`（IPv6） |
+| `nameServer` | `String` | `null` | 可选 | 指定 DNS 服务器地址，为空则使用系统默认 DNS |
+| `timeout` | `int`（毫秒） | `2000` | 可选 | 查询超时时间 |
+| `size` | `int`（byte） | `64` | 可选 | 探测包大小 |
+| `multiplePortsDetect` | `boolean` | `true` | 可选 | 是否启用多端口探测 |
+| `extension` | `Map<String, String>` | `null` | 可选 | 自定义扩展字段 |
 
 ---
 
@@ -419,19 +456,35 @@ public void clsDNSPing() {
 public void clsPing() {
     INetworkDiagnosis.PingRequest request = new INetworkDiagnosis.PingRequest();
     request.domain = "ap-guangzhou-open.cls.tencentcs.com"; // 必填：目标域名
+    request.size = 64;                                      // 可选：探测包大小，单位 byte（默认 64）
+    request.maxTimes = 10;                                  // 可选：探测次数（默认 10）
+    request.timeout = 2000;                                 // 可选：超时时间，单位毫秒（默认 2000ms）
+    request.multiplePortsDetect = true;                     // 可选：是否多端口探测（默认 true）
     request.extension = new HashMap<String, String>() {{
         put("custom_field", "ping");
     }};
+    // 不带回调
     CLSNetworkDiagnosis.getInstance().ping(request);
+    // 带回调
+    CLSNetworkDiagnosis.getInstance().ping(request, new INetworkDiagnosis.Callback() {
+        @Override
+        public void onComplete(INetworkDiagnosis.Response response) {
+            CLSLog.i("Ping", response.content);
+        }
+    });
 }
 ```
 
 **PingRequest 参数说明：**
 
-| 字段 | 类型 | 是否必填 | 说明 |
-|------|------|----------|------|
-| `domain` | `String` | 必填 | 目标域名或 IP |
-| `extension` | `Map<String, String>` | 可选 | 自定义扩展字段 |
+| 字段 | 类型 | 默认值 | 是否必填 | 说明 |
+|------|------|--------|----------|------|
+| `domain` | `String` | — | 必填 | 目标域名或 IP |
+| `size` | `int`（byte） | `64` | 可选 | ICMP 探测包大小 |
+| `maxTimes` | `int` | `10` | 可选 | 探测次数 |
+| `timeout` | `int`（毫秒） | `2000` | 可选 | 单次探测超时时间 |
+| `multiplePortsDetect` | `boolean` | `true` | 可选 | 是否启用多端口探测 |
+| `extension` | `Map<String, String>` | `null` | 可选 | 自定义扩展字段 |
 
 ---
 
@@ -442,15 +495,23 @@ public void clsPing() {
 ```java
 public void clsMTR() {
     INetworkDiagnosis.MtrRequest request = new INetworkDiagnosis.MtrRequest();
-    request.domain = "ap-guangzhou-open.cls.tencentcs.com";       // 必填：目标域名
-    request.protocol = INetworkDiagnosis.MtrRequest.Protocol.ICMP; // 可选：探测协议，ICMP 或 UDP
+    request.domain = "ap-guangzhou-open.cls.tencentcs.com";        // 必填：目标域名
+    request.protocol = INetworkDiagnosis.MtrRequest.Protocol.ICMP; // 可选：探测协议（默认 ALL）
+    request.maxTTL = 30;                                            // 可选：最大跳数（默认 30）
+    request.maxPaths = 1;                                           // 可选：最大路径数（默认 1）
+    request.maxTimes = 10;                                          // 可选：每跳探测次数（默认 10）
+    request.timeout = 2000;                                         // 可选：超时时间，单位毫秒（默认 2000ms）
+    request.multiplePortsDetect = true;                             // 可选：是否多端口探测（默认 true）
     request.extension = new HashMap<String, String>() {{
         put("custom_field", "mtr");
     }};
+    // 不带回调
+    CLSNetworkDiagnosis.getInstance().mtr(request);
+    // 带回调
     CLSNetworkDiagnosis.getInstance().mtr(request, new INetworkDiagnosis.Callback() {
         @Override
         public void onComplete(INetworkDiagnosis.Response response) {
-            CLSLog.i("MTR", response.content); // 探测完成回调
+            CLSLog.i("MTR", response.content);
         }
     });
 }
@@ -458,17 +519,25 @@ public void clsMTR() {
 
 **MtrRequest 参数说明：**
 
-| 字段 | 类型 | 是否必填 | 说明 |
-|------|------|----------|------|
-| `domain` | `String` | 必填 | 目标域名或 IP |
-| `protocol` | `Protocol` | 可选 | 探测协议：`Protocol.ICMP`（默认）或 `Protocol.UDP` |
-| `extension` | `Map<String, String>` | 可选 | 自定义扩展字段 |
+> `MtrRequest` 继承自 `PingRequest`，包含以下所有字段：
+
+| 字段 | 类型 | 默认值 | 是否必填 | 说明 |
+|------|------|--------|----------|------|
+| `domain` | `String` | — | 必填 | 目标域名或 IP |
+| `protocol` | `Protocol` | `Protocol.ALL` | 可选 | 探测协议：`ALL`（全部）、`ICMP`、`UDP` |
+| `maxTTL` | `int` | `30` | 可选 | 最大路由跳数（TTL） |
+| `maxPaths` | `int` | `1` | 可选 | 最大探测路径数 |
+| `maxTimes` | `int` | `10` | 可选 | 每跳探测次数 |
+| `timeout` | `int`（毫秒） | `2000` | 可选 | 单次探测超时时间 |
+| `size` | `int`（byte） | `64` | 可选 | 探测包大小 |
+| `multiplePortsDetect` | `boolean` | `true` | 可选 | 是否启用多端口探测 |
+| `extension` | `Map<String, String>` | `null` | 可选 | 自定义扩展字段 |
 
 **Callback 回调说明：**
 
 | 方法 | 说明 |
 |------|------|
-| `onComplete(Response response)` | 探测完成时回调，`response.content` 为探测结果 JSON 字符串 |
+| `onComplete(Response response)` | 探测完成时回调，`response.content` 为探测结果 JSON 字符串，`response.error` 为错误信息 |
 
 ---
 
@@ -480,20 +549,38 @@ public void clsMTR() {
 public void clsTcpPing() {
     INetworkDiagnosis.TcpPingRequest request = new INetworkDiagnosis.TcpPingRequest();
     request.domain = "ap-guangzhou-open.cls.tencentcs.com"; // 必填：目标域名
-    request.port = 80;                                       // 必填：目标端口
-    request.payload = "hello";                               // 可选：发送的探测数据
+    request.port = 80;                                      // 必填：目标端口
+    request.payload = "hello";                              // 可选：发送的探测数据
+    request.maxTimes = 10;                                  // 可选：探测次数（默认 10）
+    request.timeout = 2000;                                 // 可选：超时时间，单位毫秒（默认 2000ms）
+    request.size = 64;                                      // 可选：探测包大小，单位 byte（默认 64）
+    request.multiplePortsDetect = true;                     // 可选：是否多端口探测（默认 true）
     request.extension = new HashMap<String, String>() {{
         put("custom_field", "tcpPing");
     }};
+    // 不带回调
     CLSNetworkDiagnosis.getInstance().tcpPing(request);
+    // 带回调
+    CLSNetworkDiagnosis.getInstance().tcpPing(request, new INetworkDiagnosis.Callback() {
+        @Override
+        public void onComplete(INetworkDiagnosis.Response response) {
+            CLSLog.i("TcpPing", response.content);
+        }
+    });
 }
 ```
 
 **TcpPingRequest 参数说明：**
 
-| 字段 | 类型 | 是否必填 | 说明 |
-|------|------|----------|------|
-| `domain` | `String` | 必填 | 目标域名或 IP |
-| `port` | `int` | 必填 | 目标端口号 |
-| `payload` | `String` | 可选 | 探测时发送的数据内容 |
-| `extension` | `Map<String, String>` | 可选 | 自定义扩展字段 |
+> `TcpPingRequest` 继承自 `PingRequest`，包含以下所有字段：
+
+| 字段 | 类型 | 默认值 | 是否必填 | 说明 |
+|------|------|--------|----------|------|
+| `domain` | `String` | — | 必填 | 目标域名或 IP |
+| `port` | `int` | `-1` | 必填 | 目标端口号 |
+| `payload` | `String` | `null` | 可选 | 探测时发送的数据内容 |
+| `maxTimes` | `int` | `10` | 可选 | 探测次数 |
+| `timeout` | `int`（毫秒） | `2000` | 可选 | 单次探测超时时间 |
+| `size` | `int`（byte） | `64` | 可选 | 探测包大小 |
+| `multiplePortsDetect` | `boolean` | `true` | 可选 | 是否启用多端口探测 |
+| `extension` | `Map<String, String>` | `null` | 可选 | 自定义扩展字段 |
