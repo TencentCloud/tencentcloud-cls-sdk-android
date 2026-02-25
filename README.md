@@ -31,7 +31,7 @@
 在 Android Studio 工程对应模块的 `build.gradle` 文件中增加以下依赖：
 
 ```groovy
-implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.0')
+implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.1')
 ```
 
 ---
@@ -240,8 +240,8 @@ LZ4 压缩算法需要跳过混淆，在 `proguard-rules.pro` 中添加：
 在 `build.gradle` 中同时引入核心 SDK 和网络探测插件：
 
 ```groovy
-implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.0')
-implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '3.0.0')
+implementation(group: 'com.tencentcloudapi.cls', name: 'tencentcloud-cls-sdk-android', version: '3.0.1')
+implementation(group: 'com.tencentcloudapi.cls', name: 'cls-network-diagnosis-reporter-android', version: '3.0.1')
 ```
 
 | 依赖包 | 说明 |
@@ -327,7 +327,7 @@ private void initCls(Context context) {
             "[日志主题 ID]",
             new Credential("[secret_id]", "[secret_key]"));
     clsConfigOptions.enableLog(true);
-    clsConfigOptions.addTag("cls_android", "3.0.0");
+    clsConfigOptions.addTag("cls_android", "3.0.1");
     ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
 
     // 2. 创建并配置网络探测插件

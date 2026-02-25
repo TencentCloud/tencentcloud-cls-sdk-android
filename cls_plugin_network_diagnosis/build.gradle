@@ -5,7 +5,7 @@ plugins {
     id 'signing'
 }
 
-version = '3.0.0'
+version = '3.0.1'
 afterEvaluate {
     publishing {
         publications {
@@ -79,7 +79,7 @@ android {
         minSdk 21
         targetSdk 33
         versionCode 1
-        versionName "3.0.0"
+        versionName "3.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"

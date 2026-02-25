@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 "a211",
                 new Credential("AK", "rX5"));
         clsConfigOptions.enableLog(true);
-        clsConfigOptions.addTag("cls_android", "3.0.0");
+        clsConfigOptions.addTag("cls_android", "3.0.1");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
         INetworkDiagnosisPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
