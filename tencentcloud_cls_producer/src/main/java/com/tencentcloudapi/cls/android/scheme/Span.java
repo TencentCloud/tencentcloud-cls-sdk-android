@@ -331,7 +331,7 @@ public class Span {
             return false;
         } else {
             synchronized(this.lock) {
-                this.duration = (this.end - this.start) / 1000L;
+                this.duration = this.end - this.start;
                 return true;
             }
         }
@@ -347,9 +347,9 @@ public class Span {
             logItem.SetTime(System.currentTimeMillis());
             logItem.PushBack("name", this.name);
             logItem.PushBack("traceID", this.traceID);
-            logItem.PushBack("start", String.valueOf(this.start/1000L));
+            logItem.PushBack("start", String.valueOf(this.start));
             logItem.PushBack("duration", String.valueOf(this.duration));
-            logItem.PushBack("end", String.valueOf(this.end/1000L));
+            logItem.PushBack("end", String.valueOf(this.end));
             logItem.PushBack("service", TextUtils.isEmpty(this.service) ? "Android" : this.service);
 //            logItem.PushBack("kind", this.kind.kind);
 //            logItem.PushBack("spanID", this.spanID);
