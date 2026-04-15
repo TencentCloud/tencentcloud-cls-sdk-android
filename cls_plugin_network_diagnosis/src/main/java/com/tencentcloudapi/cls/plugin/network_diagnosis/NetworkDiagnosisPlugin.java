@@ -22,7 +22,7 @@ public class NetworkDiagnosisPlugin extends INetworkDiagnosisPlugin {
 
     @Override
     public String version() {
-        return "3.0.0";
+        return "3.0.1";
     }
 
     public
