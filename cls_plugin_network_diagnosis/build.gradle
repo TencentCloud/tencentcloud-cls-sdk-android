@@ -52,6 +52,9 @@ jreleaser {
     signing {
         active = 'ALWAYS'
         armored = true
+        publicKey = System.getenv('GPG_PUBLIC_KEY')
+        secretKey = System.getenv('GPG_SECRET_KEY')
+        passphrase = System.getenv('GPG_PASSPHRASE')
     }
     deploy {
         maven {
@@ -63,6 +66,8 @@ jreleaser {
                     verifyPom = false
                     namespace = 'com.tencentcloudapi.cls'
                     snapshotSupported = true
+                    username = System.getenv('MAVEN_USERNAME')
+                    password = System.getenv('MAVEN_PASSWORD')
                 }
             }
         }

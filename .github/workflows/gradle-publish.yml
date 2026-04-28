@@ -8,16 +8,14 @@
 name: Gradle Package
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*' # 当推送形如 v1.2.3 的 tag 时触发
   workflow_dispatch:
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
     - uses: actions/checkout@v4
@@ -26,22 +24,18 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-username: MAVEN_USERNAME
-        server-password: MAVEN_PASSWORD
-        gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-        gpg-passphrase: MAVEN_GPG_PASSPHRASE
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-
+        cache: gradle
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build
-
-    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
-    # the publishing section of your build.gradle
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish
+      run: ./gradlew clean publish
+    - name: Release with JReleaser
       env:
+        # 必须在 GitHub Secrets 中配置这些变量
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
+        GPG_PUBLIC_KEY: ${{ secrets.OSSRH_GPG_PUBLIC_KEY }}
+        GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+        GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
+        JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 这个是 GitHub 自动提供的，无需手动添加
+      run: ./gradlew jreleaserFullRelease
