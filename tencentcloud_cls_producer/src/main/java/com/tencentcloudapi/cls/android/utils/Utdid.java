@@ -1,6 +1,7 @@
 package com.tencentcloudapi.cls.android.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Base64;
 
@@ -9,20 +10,25 @@ import com.tencentcloudapi.cls.android.CLSLog;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.UUID;
 
 public final class Utdid {
     private Utdid() {
         //no instance
     }
+
+    // SharedPreferences 存储位置
+    private static final String SP_NAME = "cls_android_utdid";
+    private static final String SP_KEY_UTDID = "utdid";
+
+    // 兼容读取旧版本文件的路径（旧版本使用文件持久化）
+    private static final String LEGACY_FILE_DIR = "/cls_android/files";
+    private static final String LEGACY_FILE_NAME = "unique";
+
+    // 进程内内存缓存：一旦成功读到/生成过 utdid，后续调用直接返回，
+    // 完全避免任何 IO，从根本上规避 fdsan 冲突。
+    private static volatile String sCachedUtdid = null;
 
     private static class Holder {
         final static Utdid INSTANCE = new Utdid();
@@ -37,23 +43,36 @@ public final class Utdid {
             return;
         }
         try {
-            Lock.lock(context);
             Storage.getInstance().setUtdid(context, utdid);
+            sCachedUtdid = utdid;
         } catch (Throwable t) {
             // ignore
-        } finally {
-            Lock.unlock();
         }
     }
 
     public synchronized String getUtdid(Context context) {
-        String utdid = Storage.getInstance().getUtdid(context);
+        // 命中内存缓存直接返回，避免任何 IO
+        String cached = sCachedUtdid;
+        if (!TextUtils.isEmpty(cached)) {
+            return cached;
+        }
+
+        if (null == context) {
+            return "ffffffffffffffffffffffff";
+        }
+
+        String utdid;
+        try {
+            utdid = Storage.getInstance().getUtdid(context);
+        } catch (Throwable t) {
+            utdid = "";
+        }
         if (!TextUtils.isEmpty(utdid)) {
+            sCachedUtdid = utdid;
             return utdid;
         }
 
         try {
-            Lock.lock(context);
             utdid = UUID.randomUUID().toString();
             String[] parts = utdid.split("-");
             utdid = parts[0] + parts[1] + parts[2];
@@ -61,21 +80,17 @@ public final class Utdid {
             utdid = Base64.encodeToString(utdid.getBytes("UTF-8"), Base64.DEFAULT);
 
             Storage.getInstance().setUtdid(context, utdid);
+            sCachedUtdid = utdid;
         } catch (Throwable t) {
             utdid = "ffffffffffffffffffffffff";
-        } finally {
-            Lock.unlock();
         }
 
         return utdid;
     }
 
     private static class Storage {
-        final String FILE_PATH = "/cls_android/files";
-
         private static class Holder {
-            final static Utdid.Storage
-                    INSTANCE = new Utdid.Storage();
+            final static Utdid.Storage INSTANCE = new Utdid.Storage();
         }
 
         static Storage getInstance() {
@@ -83,35 +98,78 @@ public final class Utdid {
         }
 
         void setUtdid(Context context, String utdid) {
-            final File file = getFile(context);
+            if (null == context || TextUtils.isEmpty(utdid)) {
+                return;
+            }
             try {
-                FileOutputStream fos = new FileOutputStream(file);
-                //noinspection CharsetObjectCanBeUsed
-                OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
-                writer.write(utdid);
-                writer.close();
-            } catch (IOException e) {
-                CLSLog.printStackTrace(e);
+                SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+                sp.edit().putString(SP_KEY_UTDID, utdid).apply();
+            } catch (Throwable e) {
+                CLSLog.printStackTrace(e instanceof Exception ? (Exception) e : new RuntimeException(e));
             }
         }
 
         String getUtdid(Context context) {
-            final File file = getFile(context);
-            if (!file.exists()) {
+            if (null == context) {
                 return "";
             }
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-                String line = reader.readLine();
-                reader.close();
 
-                line = validUtdid(line);
-                return line;
-            } catch (IOException e) {
-                CLSLog.printStackTrace(e);
+            // 1. 优先从 SharedPreferences 读取（SP 由系统统一管理 fd，不会触发 fdsan 冲突）
+            try {
+                SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+                String utdid = sp.getString(SP_KEY_UTDID, null);
+                if (!TextUtils.isEmpty(utdid)) {
+                    return validUtdid(utdid);
+                }
+            } catch (Throwable e) {
+                CLSLog.printStackTrace(e instanceof Exception ? (Exception) e : new RuntimeException(e));
+            }
+
+            // 2. SP 中没有，兼容读取旧版本的文件；读到后立即迁移到 SP 中，
+            //    之后就不会再打开这个文件，fdsan 冲突风险仅存在于本次迁移读取。
+            String legacy = readLegacyFile(context);
+            if (!TextUtils.isEmpty(legacy)) {
+                // 迁移写入 SP
+                try {
+                    SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+                    sp.edit().putString(SP_KEY_UTDID, legacy).apply();
+                } catch (Throwable ignore) {
+                    // ignore
+                }
+                return validUtdid(legacy);
+            }
+
+            return "";
+        }
+
+        /**
+         * 读取旧版本的持久化文件，仅在 SP 中查不到时执行一次。
+         */
+        private String readLegacyFile(Context context) {
+            File file = getLegacyFile(context);
+            if (null == file || !file.exists()) {
+                return "";
+            }
+            try (FileInputStream fis = new FileInputStream(file);
+                 InputStreamReader isr = new InputStreamReader(fis);
+                 BufferedReader reader = new BufferedReader(isr)) {
+                return reader.readLine();
+            } catch (Throwable e) {
+                CLSLog.printStackTrace(e instanceof Exception ? (Exception) e : new RuntimeException(e));
             }
             return "";
+        }
+
+        private File getLegacyFile(Context context) {
+            try {
+                File dir = context.getFilesDir();
+                if (null == dir) {
+                    return null;
+                }
+                return new File(new File(dir, LEGACY_FILE_DIR), LEGACY_FILE_NAME);
+            } catch (Throwable t) {
+                return null;
+            }
         }
 
         private String validUtdid(String utidid) {
@@ -124,70 +182,6 @@ public final class Utdid {
             }
 
             return utidid;
-        }
-
-        File getFile(Context context) {
-            File file = context.getFilesDir();
-            file = new File(file, FILE_PATH);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            return new File(file, "unique");
-        }
-    }
-
-    private static class Lock {
-        private static File lockFile = null;
-        private static FileChannel channel = null;
-        private static FileLock lock = null;
-
-        static synchronized void lock(Context context) {
-            if (null == lockFile) {
-                lockFile = Storage.getInstance().getFile(context);
-            }
-
-            if (!lockFile.exists()) {
-                try {
-                    lockFile.createNewFile();
-                } catch (IOException e) {
-                    return;
-                }
-            }
-
-            if (null == channel) {
-                try {
-                    channel = new RandomAccessFile(lockFile, "rw").getChannel();
-                } catch (FileNotFoundException e) {
-                    return;
-                }
-            }
-            try {
-                lock = channel.lock();
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-
-        static synchronized void unlock() {
-            if (null != lock) {
-                try {
-                    lock.release();
-                } catch (IOException e) {
-                    // ignore
-                } finally {
-                    lock = null;
-                }
-            }
-
-            if (null != channel) {
-                try {
-                    channel.close();
-                } catch (IOException e) {
-                    // ignore
-                } finally {
-                    channel = null;
-                }
-            }
         }
     }
 }
