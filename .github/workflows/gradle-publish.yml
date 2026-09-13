@@ -28,7 +28,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew clean publish --stacktrace
+      run: ./gradlew clean publish
     - name: Release with JReleaser
       env:
         # 必须在 GitHub Secrets 中配置这些变量
@@ -38,4 +38,4 @@ jobs:
         GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
         GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
         JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 这个是 GitHub 自动提供的，无需手动添加
-      run: ./gradlew jreleaserFullRelease --stacktrace --info
+      run: ./gradlew jreleaserFullRelease
