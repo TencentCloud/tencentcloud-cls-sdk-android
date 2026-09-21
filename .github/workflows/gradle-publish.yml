@@ -10,32 +10,134 @@ name: Gradle Package
 on:
   push:
     tags:
-      - 'v*' # 当推送形如 v1.2.3 的 tag 时触发
+      # v*         : 兼容旧行为，两个模块都发
+      # producer-v*: 仅发布 tencentcloud-cls-sdk-android
+      # diagnosis-v*: 仅发布 cls-network-diagnosis-reporter-android
+      - 'v*'
+      - 'producer-v*'
+      - 'diagnosis-v*'
   workflow_dispatch:
+    inputs:
+      target:
+        description: '选择要发布的模块'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - producer
+          - diagnosis
 
 jobs:
-  build:
+  # ---------------------------------------------------------------------------
+  # 计算本次要发布哪些模块（避免在每个 job 里重复写 if 条件）
+  # 输出:
+  #   publish_producer   : 'true' | 'false'
+  #   publish_diagnosis  : 'true' | 'false'
+  # ---------------------------------------------------------------------------
+  decide:
     runs-on: ubuntu-latest
-
+    outputs:
+      publish_producer: ${{ steps.pick.outputs.publish_producer }}
+      publish_diagnosis: ${{ steps.pick.outputs.publish_diagnosis }}
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew clean publish
-    - name: Release with JReleaser
-      env:
-        # 必须在 GitHub Secrets 中配置这些变量
-        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-        GPG_PUBLIC_KEY: ${{ secrets.OSSRH_GPG_PUBLIC_KEY }}
-        GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-        GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
-        JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 这个是 GitHub 自动提供的，无需手动添加
-      run: ./gradlew jreleaserFullRelease
+      - name: Pick targets
+        id: pick
+        run: |
+          publish_producer=false
+          publish_diagnosis=false
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "${{ github.event.inputs.target }}" in
+              all)
+                publish_producer=true
+                publish_diagnosis=true
+                ;;
+              producer)
+                publish_producer=true
+                ;;
+              diagnosis)
+                publish_diagnosis=true
+                ;;
+            esac
+          else
+            # push tag
+            ref="${GITHUB_REF##refs/tags/}"
+            case "$ref" in
+              producer-v*)
+                publish_producer=true
+                ;;
+              diagnosis-v*)
+                publish_diagnosis=true
+                ;;
+              v*)
+                # 兼容旧的 v* tag：两个都发
+                publish_producer=true
+                publish_diagnosis=true
+                ;;
+            esac
+          fi
+
+          echo "publish_producer=$publish_producer" >> "$GITHUB_OUTPUT"
+          echo "publish_diagnosis=$publish_diagnosis" >> "$GITHUB_OUTPUT"
+          echo "==> publish_producer=$publish_producer, publish_diagnosis=$publish_diagnosis"
+
+  # ---------------------------------------------------------------------------
+  # 发布 tencentcloud-cls-sdk-android（模块目录：tencentcloud_cls_producer）
+  # ---------------------------------------------------------------------------
+  publish-producer:
+    needs: decide
+    if: needs.decide.outputs.publish_producer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build tencentcloud-cls-sdk-android
+        run: ./gradlew :tencentcloud_cls_producer:clean :tencentcloud_cls_producer:publish
+      - name: Release tencentcloud-cls-sdk-android with JReleaser
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          GPG_PUBLIC_KEY: ${{ secrets.OSSRH_GPG_PUBLIC_KEY }}
+          GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :tencentcloud_cls_producer:jreleaserFullRelease
+
+  # ---------------------------------------------------------------------------
+  # 发布 cls-network-diagnosis-reporter-android（模块目录：cls_plugin_network_diagnosis）
+  # 注意：该模块 implementation project(':tencentcloud_cls_producer')，
+  # 因此需要保证 producer 已经先发布或与 diagnosis 使用的版本一致。
+  # ---------------------------------------------------------------------------
+  publish-diagnosis:
+    needs: decide
+    if: needs.decide.outputs.publish_diagnosis == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build cls-network-diagnosis-reporter-android
+        run: ./gradlew :cls_plugin_network_diagnosis:clean :cls_plugin_network_diagnosis:publish
+      - name: Release cls-network-diagnosis-reporter-android with JReleaser
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          GPG_PUBLIC_KEY: ${{ secrets.OSSRH_GPG_PUBLIC_KEY }}
+          GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :cls_plugin_network_diagnosis:jreleaserFullRelease
