@@ -7,13 +7,10 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.os.ParcelFileDescriptor;
-import android.system.ErrnoException;
 import android.system.Os;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
@@ -21,8 +18,24 @@ import java.util.Enumeration;
 import com.tencentcloudapi.cls.android.CLSLog;
 
 /**
- * NetworkSocketBinder实现类
- * 负责将socket绑定到指定的网络接口
+ * NetworkSocketBinder 实现类
+ * 负责将 native 传入的 socket fd 绑定到指定的网络接口。
+ *
+ * <p><b>关于 fdsan 的说明：</b>
+ * 本类曾经因 {@link ParcelFileDescriptor#fromFd(int)} 在某些 Android 版本 / OEM ROM 上会给
+ * 传入的 fd 打上 unique_fd owner tag，导致 native 侧后续用裸 {@code close(fd)} 释放时触发
+ * SIGABRT ({@code fdsan: attempted to close file descriptor X, expected to be unowned}) 而崩溃。
+ *
+ * <p>该问题已在 <b>native 层</b>（{@code libclsnetworkdiagnosis.so}）解决：
+ * <ul>
+ *     <li>{@code JNI_OnLoad} 中调用 {@code android_fdsan_set_error_level(WARN_ALWAYS)}
+ *         把 fdsan 从 abort 降级为 warn；</li>
+ *     <li>所有 native close 都改为 {@code cls_safe_close_fd()}，会先通过
+ *         {@code android_fdsan_get_owner_tag} 拿到真实 tag 后 close。</li>
+ * </ul>
+ *
+ * 因此本类可以恢复原始朴素写法，无需再做反射构造 FileDescriptor 或复杂的 detachFd 兜底。
+ *
  * @author farmerx
  */
 @SuppressLint({"NewApi"})
@@ -48,12 +61,8 @@ public class NetworkSocketBinder implements SocketBinder {
         ParcelFileDescriptor pfd = null;
         try {
             // 1) 将 socket 绑定到指定 Network。
-            //    ParcelFileDescriptor.fromFd(int) 会 dup 出一个新的 fd 并用 unique_fd 打上 owner tag，
-            //    如果我们随后手动 close(pfd)，一旦 framework 内部/GC 也去 close 该 dup fd 就会造成
-            //    fdsan double-close crash（表现为 "attempted to close file descriptor X, expected to be
-            //    unowned, actually owned by unique_fd 0x...")。
-            //    因此这里在 network.bindSocket 结束后，调用 detachFd() 放弃 pfd 对 dup fd 的所有权，
-            //    再通过 Os.close 无 tag 地关闭它，避免与 unique_fd tag 冲突。
+            //    ParcelFileDescriptor.fromFd 会 dup 一个 fd 并交由 unique_fd 管理，
+            //    随后 pfd.close() 会关闭这个 dup fd（原始 socketFd 不变，由 native 层管理）。
             pfd = ParcelFileDescriptor.fromFd(socketFd);
             network.bindSocket(pfd.getFileDescriptor());
 
@@ -67,40 +76,27 @@ public class NetworkSocketBinder implements SocketBinder {
                     boundInetAddress = getIPv6Address(network, interfaceName);
                 }
             }
-
-            // 3) 释放 pfd 对 dup fd 的所有权（detachFd 返回 dup fd，且清除 unique_fd owner tag），
-            //    然后我们自己关闭它。这样后续无论谁再持有该编号都不会触发 fdsan 冲突。
-            int dupFd = pfd.detachFd();
-            pfd = null; // 已 detach，不需要再 close
-            try {
-                Os.close(fromRawFd(dupFd));
-            } catch (Throwable ignore) {
-                // 关闭失败不影响主流程
-            }
-
             if (null == boundInetAddress) {
                 CLSLog.w(TAG, "Failed to get network IP address, binding to network only");
                 return socketFd;
             }
 
-            // 4) 对原始 socketFd 做本地 IP/端口绑定。
-            //    直接使用一个非拥有型的 FileDescriptor 包装原始 fd 传给 Os.bind，绝不去 close 它 —
-            //    该 fd 的所有权始终归 native 探测层（JNI unique_fd）所有。
-            FileDescriptor rawFd = fromRawFd(socketFd);
+            // 3) 对原始 socketFd 做本地 IP/端口绑定
+            FileDescriptor fd = pfd.getFileDescriptor();
             if ("icmp".equalsIgnoreCase(protocol)) {
                 try {
-                    Os.bind(rawFd, boundInetAddress, 0);
+                    Os.bind(fd, boundInetAddress, 0);
                     CLSLog.d(TAG, "ICMP socket bound to IP only: " + boundInetAddress.getHostAddress());
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     CLSLog.w(TAG, "Failed to bind ICMP socket to IP: " + e.getMessage());
                 }
             } else if ("udp".equalsIgnoreCase(protocol) || "tcp".equalsIgnoreCase(protocol)) {
                 int bindPort = getUnusedHighPort();
                 try {
-                    Os.bind(rawFd, boundInetAddress, bindPort);
+                    Os.bind(fd, boundInetAddress, bindPort);
                     CLSLog.d(TAG, protocol.toUpperCase() + " socket bound to IP and port: "
                             + boundInetAddress.getHostAddress() + ":" + bindPort);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     CLSLog.w(TAG, "Failed to bind " + protocol.toUpperCase()
                             + " socket to IP and port: " + e.getMessage());
                 }
@@ -112,42 +108,15 @@ public class NetworkSocketBinder implements SocketBinder {
             CLSLog.printStackTrace(e);
             return -1;
         } finally {
-            // 如果 pfd 因为异常没有 detach，这里安全释放
+            // 无论正常/异常，都关闭 pfd 释放 dup fd。
+            // native 侧的 fd 是 socketFd（未通过 pfd 管理），这里 pfd.close 不会影响它。
             if (pfd != null) {
                 try {
-                    int leftFd = pfd.detachFd();
-                    try {
-                        Os.close(fromRawFd(leftFd));
-                    } catch (Throwable ignore) {
-                    }
-                } catch (Throwable ignore) {
+                    pfd.close();
+                } catch (IOException ignore) {
                 }
             }
         }
-    }
-
-    /**
-     * 构造一个"非拥有型"的 {@link FileDescriptor}，仅用于把 raw fd 传递给 {@link Os#bind}
-     * 等系统调用。返回的对象不会被 fdsan 打 tag，也不应该被 close —— fd 的真正所有者是 JNI
-     * 探测层。使用反射设置 FileDescriptor 内部字段以适配各版本 Android。
-     */
-    private static FileDescriptor fromRawFd(int fd) {
-        FileDescriptor result = new FileDescriptor();
-        try {
-            // 优先尝试 public API (API 27+)
-            Method setInt$ = FileDescriptor.class.getMethod("setInt$", int.class);
-            setInt$.invoke(result, fd);
-            return result;
-        } catch (Throwable ignore) {
-        }
-        try {
-            Field descriptor = FileDescriptor.class.getDeclaredField("descriptor");
-            descriptor.setAccessible(true);
-            descriptor.setInt(result, fd);
-        } catch (Throwable e) {
-            CLSLog.e(TAG, "fromRawFd failed: " + e.getMessage());
-        }
-        return result;
     }
 
     /**
