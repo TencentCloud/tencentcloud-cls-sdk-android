@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         singletonInit(this);
         try {
+            clsHttpPing(this);
             clsDNSPing();
             clsPing();
             clsMTR();
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 "a211",
                 new Credential("AK", "rX5"));
         clsConfigOptions.enableLog(true);
-        clsConfigOptions.addTag("cls_android", "3.0.3");
+        clsConfigOptions.addTag("cls_android", "3.0.4");
         ClsDataAPI.startWithConfigOptions(context, clsConfigOptions);
         // 添加插件，自定义插件上报CLS内容
         INetworkDiagnosisPlugin clsNetDiagnosisPlugin = new NetworkDiagnosisPlugin();
