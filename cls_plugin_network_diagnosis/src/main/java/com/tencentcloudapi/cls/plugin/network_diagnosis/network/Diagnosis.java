@@ -252,14 +252,26 @@ public class Diagnosis {
         }, config, config.taskId);
     }
 
+    /**
+     * 安全释放 ParcelFileDescriptor 的兜底方法。
+     *
+     * 注意：如果 pfd 内部的 fd 已经/将会被别处（例如 Socket、native unique_fd、Os.close）关闭，
+     * 那么这里必须优先 detachFd() 放弃所有权后再选择性 close，避免触发 fdsan double-close。
+     * 目前该方法暂无调用点，保留仅作为将来兜底工具。
+     */
+    @SuppressWarnings("unused")
     private static void closeSocket(ParcelFileDescriptor pfd) {
-        if (pfd != null) {
-            try {
-                pfd.close();
-            } catch (IOException e) {
-                CLSLog.e(TAG, "Failed to close socket: " + e.getMessage());
-                CLSLog.printStackTrace(e);
-            }
+        if (pfd == null) {
+            return;
+        }
+        try {
+            // 先 detach 卸掉 fdsan owner tag，再关闭 pfd（此时 pfd 内部已为 -1，close 不会真正关 fd，
+            // 由 fd 的其他所有者负责关闭；如果没有其他所有者会导致泄漏，请调用方自行 close(detachFd())）
+            pfd.detachFd();
+            pfd.close();
+        } catch (Throwable e) {
+            CLSLog.e(TAG, "Failed to close socket: " + e.getMessage());
+            CLSLog.printStackTrace(e);
         }
     }
 
@@ -292,9 +304,14 @@ public class Diagnosis {
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse ping result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
+                        // 兜底：捕获所有异常（包括 native 抛出的 Error/AssertionError），
+                        // 避免探测线程因未捕获异常终止，导致后续任务无法消费
                         CLSLog.e(TAG, "Ping detection failed: " + e.getMessage());
                         CLSLog.printStackTrace(e);
+                    } finally {
+                        // 显式解引用 binder，帮助 GC 尽早回收其内部对 Network 的强引用
+                        binder = null;
                     }
                 }
             }, config, config.taskId);
@@ -346,9 +363,12 @@ public class Diagnosis {
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse DNS result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
+                        // 兜底：同 statPingInner，避免 native 侧异常导致探测线程终止
                         CLSLog.e(TAG, "DNS detection failed: " + e.getMessage());
                         CLSLog.printStackTrace(e);
+                    } finally {
+                        binder = null;
                     }
                 }
             }, config, config.taskId);
@@ -397,9 +417,12 @@ public class Diagnosis {
                     } catch (JSONException e) {
                         CLSLog.e(TAG, "Failed to parse MTR result: " + e.getMessage());
                         CLSLog.printStackTrace(e);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
+                        // 兜底：同 statPingInner，避免 native 侧异常导致探测线程终止
                         CLSLog.e(TAG, "MTR detection failed: " + e.getMessage());
                         CLSLog.printStackTrace(e);
+                    } finally {
+                        binder = null;
                     }
                 }
             }, config, config.taskId);
