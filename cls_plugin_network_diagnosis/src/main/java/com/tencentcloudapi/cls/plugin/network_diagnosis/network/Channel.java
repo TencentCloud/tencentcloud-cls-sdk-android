@@ -206,18 +206,27 @@ public class Channel {
         }
 
         public void closeSocket() {
-            try {
-                this.socket.close();
-            } catch (IOException e) {
-                CLSLog.printStackTrace(e);
+            // Socket 与 ParcelFileDescriptor 共享同一个底层 fd（pfd 使用 unique_fd 打了 owner tag）。
+            // 正确顺序：
+            //   1) 先 detachFd() —— 释放 pfd 对 fd 的所有权，清除 fdsan owner tag（避免 pfd 的
+            //      finalizer/close 再次去 close 同一个 fd 而触发 fdsan double-close abort）；
+            //   2) 再 socket.close() —— 由 Java Socket 关闭该 fd（此时 fd 已 unowned，安全）。
+            // 如果反过来先 socket.close 再 pfd.close，则会因为 unique_fd 视角下 fd 属主不匹配触发
+            // "attempted to close file descriptor X, expected to be unowned, actually owned by unique_fd"。
+            if (this.parcelFileDescriptor != null) {
+                try {
+                    this.parcelFileDescriptor.detachFd();
+                } catch (Throwable e) {
+                    CLSLog.printStackTrace(e);
+                }
             }
-            this.parcelFileDescriptor.detachFd();
-            try {
-                this.parcelFileDescriptor.close();
-            } catch (IOException e) {
-                CLSLog.printStackTrace(e);
+            if (this.socket != null) {
+                try {
+                    this.socket.close();
+                } catch (IOException e) {
+                    CLSLog.printStackTrace(e);
+                }
             }
-
         }
 
         public void closeDoubleChannel() {

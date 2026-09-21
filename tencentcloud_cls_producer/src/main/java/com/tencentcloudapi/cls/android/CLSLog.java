@@ -50,7 +50,7 @@ public final class CLSLog {
             Log.i(TAG, format(module, msg));
         }
     }
-    public static void printStackTrace(Exception e) {
+    public static void printStackTrace(Throwable e) {
         if (enableLog && e != null) {
             Log.e("CLS.Exception", "", e);
         }

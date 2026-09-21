@@ -63,27 +63,43 @@ public class NetworkDiagnosis implements INetworkDiagnosis {
                 CLSLog.printStackTrace(e);
             }
         }
-        if (null != token) {
+        if (!TextUtils.isEmpty(token)) {
             this.mToken = token;
-            String t = new String(Base64.decode(token, Base64.DEFAULT));
+            String t = null;
             try {
-                JSONObject tokenJson = new JSONObject(t);
-                if (tokenJson.has("topic_id")) {
-                    this.mTopicId = tokenJson.getString("topic_id");
+                byte[] decoded = Base64.decode(token, Base64.DEFAULT);
+                if (null != decoded && decoded.length > 0) {
+                    t = new String(decoded);
                 }
-                if (tokenJson.has("n_a_id")) {
-                    this.mNetworkAppId = tokenJson.getString("n_a_id");
-                }
-                if (tokenJson.has("key")) {
-                    this.mAppKey = tokenJson.getString("key");
-                }
-                if (tokenJson.has("uin")) {
-                    this.mUin = tokenJson.getString("uin");
-                }
-            } catch (JSONException e) {
-                CLSLog.printStackTrace(e);
+            } catch (IllegalArgumentException e) {
+                // token 不是合法 Base64，静默降级，避免 CLS.Exception 红栈刷屏
+                CLSLog.w(TAG, "token is not a valid Base64 string, skip parsing: " + e.getMessage());
             }
-
+            if (!TextUtils.isEmpty(t)) {
+                try {
+                    JSONObject tokenJson = new JSONObject(t);
+                    if (tokenJson.has("topic_id")) {
+                        this.mTopicId = tokenJson.getString("topic_id");
+                    }
+                    if (tokenJson.has("n_a_id")) {
+                        this.mNetworkAppId = tokenJson.getString("n_a_id");
+                    }
+                    if (tokenJson.has("key")) {
+                        this.mAppKey = tokenJson.getString("key");
+                    }
+                    if (tokenJson.has("uin")) {
+                        this.mUin = tokenJson.getString("uin");
+                    }
+                } catch (JSONException e) {
+                    CLSLog.printStackTrace(e);
+                }
+            } else {
+                CLSLog.w(TAG, "token is empty after Base64 decode, skip parsing.");
+            }
+            // token 解析失败也允许回退到显式传入的 topicId
+            if (TextUtils.isEmpty(this.mTopicId) && !TextUtils.isEmpty(topicId)) {
+                this.mTopicId = topicId;
+            }
         } else {
             if (null != topicId) {
                 this.mTopicId = topicId;
