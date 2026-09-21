@@ -420,27 +420,29 @@ public class Channel {
         }
 
         private static JSONObject getIpInfoNetwork(Network n) {
+            HttpURLConnection conn = null;
+            InputStream in = null;
             try {
-                String uri = "/geo?networkappid=" + Utils.getNetworkAppId() + "&appkey=" + Utils.getAppKey()+ "&uin=" + Utils.getUin();
+                String uri = "/geo?networkappid=" + Utils.getNetworkAppId() + "&appkey=" + Utils.getAppKey() + "&uin=" + Utils.getUin();
                 String urlStr = Utils.getConfig().getEndpoint() + uri;
                 URL url = new URL(urlStr);
-                HttpURLConnection conn;
-                if (VERSION.SDK_INT >= 23) {
+                if (VERSION.SDK_INT >= 23 && n != null) {
                     conn = (HttpURLConnection) n.openConnection(url);
                 } else {
                     conn = (HttpURLConnection) url.openConnection();
                 }
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(20000);
+                // 缩短超时，避免长时间占用 socket fd —— 该 fd 与 native 探测层可能存在冲突时越短越安全
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(10000);
                 conn.setUseCaches(false);
                 conn.connect();
                 int code = conn.getResponseCode();
                 CLSLog.i(TAG, "getIpInfoNetwork code " + code);
                 if (code == 200) {
-                    InputStream in = conn.getInputStream();
+                    in = conn.getInputStream();
                     byte[] buffer = new byte[10240];
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    int len = 0;
+                    int len;
 
                     while ((len = in.read(buffer)) > 0) {
                         baos.write(buffer, 0, len);
@@ -453,6 +455,21 @@ public class Channel {
                 }
             } catch (Exception e) {
                 CLSLog.e(TAG, "getIpInfoNetwork exception: " + e.getMessage() + "\n" + e.toString());
+            } finally {
+                // 必须显式关闭 InputStream 和 HttpURLConnection，避免 socket fd 长期驻留，
+                // 导致 fd 编号被后续 native unique_fd 复用时产生 fdsan double-close。
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (Throwable ignore) {
+                    }
+                }
+                if (conn != null) {
+                    try {
+                        conn.disconnect();
+                    } catch (Throwable ignore) {
+                    }
+                }
             }
             return new JSONObject();
         }
@@ -486,7 +503,8 @@ public class Channel {
                                 try {
                                     long ts = cell.getLong("ts");
                                     long now = System.currentTimeMillis();
-                                    if (now < 600000L) {
+                                    // 缓存 10 分钟内的蜂窝网络 geo 信息可直接复用（修正原 now < 600000L 笔误）
+                                    if (now - ts < 600000L) {
                                         return cell;
                                     }
                                 } catch (JSONException var11) {

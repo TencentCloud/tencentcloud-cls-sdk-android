@@ -7,10 +7,13 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.os.ParcelFileDescriptor;
+import android.system.ErrnoException;
 import android.system.Os;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
@@ -39,80 +42,112 @@ public class NetworkSocketBinder implements SocketBinder {
         if (null == network) {
             return -1;
         }
+        if (socketFd < 0) {
+            return -1;
+        }
         ParcelFileDescriptor pfd = null;
         try {
+            // 1) 将 socket 绑定到指定 Network。
+            //    ParcelFileDescriptor.fromFd(int) 会 dup 出一个新的 fd 并用 unique_fd 打上 owner tag，
+            //    如果我们随后手动 close(pfd)，一旦 framework 内部/GC 也去 close 该 dup fd 就会造成
+            //    fdsan double-close crash（表现为 "attempted to close file descriptor X, expected to be
+            //    unowned, actually owned by unique_fd 0x...")。
+            //    因此这里在 network.bindSocket 结束后，调用 detachFd() 放弃 pfd 对 dup fd 的所有权，
+            //    再通过 Os.close 无 tag 地关闭它，避免与 unique_fd tag 冲突。
             pfd = ParcelFileDescriptor.fromFd(socketFd);
             network.bindSocket(pfd.getFileDescriptor());
-            // 根据协议类型进行不同的IP/端口绑定
-            FileDescriptor fd = pfd.getFileDescriptor();
-            InetAddress boundInetAddress = null;
 
-            // 获取网卡对应的IP地址
+            // 2) 计算需要绑定的本地 IP
+            InetAddress boundInetAddress;
             if (isIpv6) {
                 boundInetAddress = getIPv6Address(network, interfaceName);
             } else {
-                // 对于IPv4，优先获取IPv4地址
                 boundInetAddress = getIPv4Address(network, interfaceName);
                 if (null == boundInetAddress) {
                     boundInetAddress = getIPv6Address(network, interfaceName);
                 }
             }
+
+            // 3) 释放 pfd 对 dup fd 的所有权（detachFd 返回 dup fd，且清除 unique_fd owner tag），
+            //    然后我们自己关闭它。这样后续无论谁再持有该编号都不会触发 fdsan 冲突。
+            int dupFd = pfd.detachFd();
+            pfd = null; // 已 detach，不需要再 close
+            try {
+                Os.close(fromRawFd(dupFd));
+            } catch (Throwable ignore) {
+                // 关闭失败不影响主流程
+            }
+
             if (null == boundInetAddress) {
                 CLSLog.w(TAG, "Failed to get network IP address, binding to network only");
-                // fromFd不会关闭dup的socket，可以安全关闭
-                pfd.close();
                 return socketFd;
             }
 
-            // 根据协议类型进行不同的绑定
+            // 4) 对原始 socketFd 做本地 IP/端口绑定。
+            //    直接使用一个非拥有型的 FileDescriptor 包装原始 fd 传给 Os.bind，绝不去 close 它 —
+            //    该 fd 的所有权始终归 native 探测层（JNI unique_fd）所有。
+            FileDescriptor rawFd = fromRawFd(socketFd);
             if ("icmp".equalsIgnoreCase(protocol)) {
-                // ICMP协议：只绑定IP地址，不绑定端口
                 try {
-                    Os.bind(fd, boundInetAddress, 0);  // 端口为0表示不绑定特定端口
+                    Os.bind(rawFd, boundInetAddress, 0);
                     CLSLog.d(TAG, "ICMP socket bound to IP only: " + boundInetAddress.getHostAddress());
                 } catch (Exception e) {
                     CLSLog.w(TAG, "Failed to bind ICMP socket to IP: " + e.getMessage());
-                    // 如果IP绑定失败，至少已经绑定了Network
                 }
             } else if ("udp".equalsIgnoreCase(protocol) || "tcp".equalsIgnoreCase(protocol)) {
-                // UDP/TCP协议：绑定IP地址和端口
                 int bindPort = getUnusedHighPort();
                 try {
-                    Os.bind(fd, boundInetAddress, bindPort);
-                    CLSLog.d(TAG, protocol.toUpperCase() + " socket bound to IP and port: " +
-                            boundInetAddress.getHostAddress() + ":" + bindPort);
+                    Os.bind(rawFd, boundInetAddress, bindPort);
+                    CLSLog.d(TAG, protocol.toUpperCase() + " socket bound to IP and port: "
+                            + boundInetAddress.getHostAddress() + ":" + bindPort);
                 } catch (Exception e) {
-                    CLSLog.w(TAG, "Failed to bind " + protocol.toUpperCase() + " socket to IP and port: " + e.getMessage());
+                    CLSLog.w(TAG, "Failed to bind " + protocol.toUpperCase()
+                            + " socket to IP and port: " + e.getMessage());
                 }
             }
 
-            // 关闭ParcelFileDescriptor
-            // fromFd不会关闭dup的socket，可以安全关闭
-            // 绑定状态在socket资源级别共享，原始socket会继承绑定状态
-            pfd.close();
-
-            // 返回dup的socket fd（仍然有效）
-            // JNI层使用原始socket进行探测，原始socket已继承绑定状态
             return socketFd;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             CLSLog.e(TAG, "Failed to bind socket to network: " + e.getMessage());
             CLSLog.printStackTrace(e);
+            return -1;
+        } finally {
+            // 如果 pfd 因为异常没有 detach，这里安全释放
             if (pfd != null) {
                 try {
-                    pfd.close();
-                } catch (IOException ignored) {}
+                    int leftFd = pfd.detachFd();
+                    try {
+                        Os.close(fromRawFd(leftFd));
+                    } catch (Throwable ignore) {
+                    }
+                } catch (Throwable ignore) {
+                }
             }
-            return -1;
-        } catch (Exception e) {
-            CLSLog.e(TAG, "Failed to bind socket: " + e.getMessage());
-            CLSLog.printStackTrace(e);
-            if (pfd != null) {
-                try {
-                    pfd.close();
-                } catch (IOException ignored) {}
-            }
-            return -1;
         }
+    }
+
+    /**
+     * 构造一个"非拥有型"的 {@link FileDescriptor}，仅用于把 raw fd 传递给 {@link Os#bind}
+     * 等系统调用。返回的对象不会被 fdsan 打 tag，也不应该被 close —— fd 的真正所有者是 JNI
+     * 探测层。使用反射设置 FileDescriptor 内部字段以适配各版本 Android。
+     */
+    private static FileDescriptor fromRawFd(int fd) {
+        FileDescriptor result = new FileDescriptor();
+        try {
+            // 优先尝试 public API (API 27+)
+            Method setInt$ = FileDescriptor.class.getMethod("setInt$", int.class);
+            setInt$.invoke(result, fd);
+            return result;
+        } catch (Throwable ignore) {
+        }
+        try {
+            Field descriptor = FileDescriptor.class.getDeclaredField("descriptor");
+            descriptor.setAccessible(true);
+            descriptor.setInt(result, fd);
+        } catch (Throwable e) {
+            CLSLog.e(TAG, "fromRawFd failed: " + e.getMessage());
+        }
+        return result;
     }
 
     /**
