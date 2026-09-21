@@ -41,8 +41,6 @@ public class DetectHttpPing {
 
     private static final String TAG = "DetectHttpPing";
 
-    private static OkHttpClient mOkhttpClient;
-
     DetectHttpPing() {
     }
 
@@ -91,11 +89,19 @@ public class DetectHttpPing {
 
             int maxRequests = 5;
             int maxRequestsPerHost = 1;
-            Dispatcher dispatcher = new Dispatcher(new ThreadPoolExecutor(0, maxRequests, 60L, TimeUnit.SECONDS, new SynchronousQueue()));
+            // 每次探测局部使用一个 Dispatcher + 线程池，使用完毕后一定要 shutdown，
+            // 否则线程 + fd 会随该方法反复调用而累积泄漏（也会加剧 fd 编号复用 → fdsan 冲突）
+            final ThreadPoolExecutor httpExecutor = new ThreadPoolExecutor(0, maxRequests, 60L,
+                    TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+            final Dispatcher dispatcher = new Dispatcher(httpExecutor);
             dispatcher.setMaxRequestsPerHost(maxRequestsPerHost);
-            mOkhttpClient = (new OkHttpClient()).newBuilder().dispatcher(dispatcher).build();
-            OkHttpClient.Builder builder = mOkhttpClient.newBuilder();
-            builder.eventListener(listener).connectTimeout((long)config.timeout, TimeUnit.MILLISECONDS).readTimeout((long)config.timeout, TimeUnit.MILLISECONDS).writeTimeout((long)config.timeout, TimeUnit.MILLISECONDS).retryOnConnectionFailure(false).connectionPool(new ConnectionPool(0, 5L, TimeUnit.SECONDS));
+            OkHttpClient.Builder builder = new OkHttpClient.Builder().dispatcher(dispatcher);
+            builder.eventListener(listener)
+                    .connectTimeout((long) config.timeout, TimeUnit.MILLISECONDS)
+                    .readTimeout((long) config.timeout, TimeUnit.MILLISECONDS)
+                    .writeTimeout((long) config.timeout, TimeUnit.MILLISECONDS)
+                    .retryOnConnectionFailure(false)
+                    .connectionPool(new ConnectionPool(0, 5L, TimeUnit.SECONDS));
             if (network != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 builder.socketFactory(network.getSocketFactory());
             }
@@ -107,12 +113,13 @@ public class DetectHttpPing {
             }
 
             client = builder.build();
+            final OkHttpClient finalClient = client;
             Request.Builder reqBuilder = new Request.Builder();
             reqBuilder.url(url);
             if (config.headers != null && !config.headers.isEmpty()) {
                 Headers.Builder headersBuilder = new Headers.Builder();
 
-                for(String key : config.headers.keySet()) {
+                for (String key : config.headers.keySet()) {
                     headersBuilder.add(key, (String) Objects.requireNonNull(config.headers.get(key)));
                 }
 
@@ -120,25 +127,61 @@ public class DetectHttpPing {
             }
 
             Request request = reqBuilder.build();
-            client.newCall(request).enqueue(new Callback() {
+            finalClient.newCall(request).enqueue(new Callback() {
+                @Override
                 public void onFailure(Call call, IOException e) {
-                    CLSLog.e(TAG, "startHttpPing onFailure:\n" + e.getMessage() + "\n" + e.toString());
+                    try {
+                        CLSLog.e(TAG, "startHttpPing onFailure:\n" + e.getMessage() + "\n" + e.toString());
+                    } finally {
+                        shutdownClient(finalClient);
+                    }
                 }
-                public void onResponse(Call call, Response response) throws IOException {
-                    CLSLog.i(TAG, "startHttpPing code: " + response.code() + " onlyHeader " + config.downloadHeaderOnly);
-                    if (config.downloadHeaderOnly) {
-                        response.close();
-                    } else {
-                        response.peekBody((long)config.downloadBytesLimit);
-                        response.close();
+
+                @Override
+                public void onResponse(Call call, Response response) {
+                    try {
+                        CLSLog.i(TAG, "startHttpPing code: " + response.code()
+                                + " onlyHeader " + config.downloadHeaderOnly);
+                        if (!config.downloadHeaderOnly) {
+                            try {
+                                response.peekBody((long) config.downloadBytesLimit);
+                            } catch (Throwable t) {
+                                CLSLog.e(TAG, "peekBody error: " + t.getMessage());
+                            }
+                        }
+                    } finally {
+                        // 无论正常/异常都确保关闭 response，避免 socket fd 驻留
+                        try {
+                            response.close();
+                        } catch (Throwable ignore) {
+                        }
+                        shutdownClient(finalClient);
                     }
                 }
             });
-        } catch (Exception e) {
+        } catch (Throwable e) {
             CLSLog.printStackTrace(e);
             CLSLog.e(TAG, "doDetectHttpPing error: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * 将 OkHttpClient 内部的 Dispatcher 线程池与连接池彻底释放，避免探测反复调用后
+     * 线程/socket fd 持续累积（既防 OOM，也降低 fd 编号历串 → native unique_fd 冲突的概率）。
+     */
+    private static void shutdownClient(OkHttpClient client) {
+        if (client == null) {
+            return;
+        }
+        try {
+            client.dispatcher().executorService().shutdown();
+        } catch (Throwable ignore) {
+        }
+        try {
+            client.connectionPool().evictAll();
+        } catch (Throwable ignore) {
+        }
     }
 
     private static class DetectionDns implements Dns {

@@ -68,10 +68,14 @@ public class DetectTcpPing {
                 index = i;
                 try {
                     if (100 > t && t > 0) {
-                        Thread.sleep(100 - (int)t);
+                        Thread.sleep(100 - (int) t);
                     }
-                } catch (Exception e) {
-                    CLSLog.printStackTrace(e);
+                } catch (InterruptedException ie) {
+                    // 恢复中断状态，避免上层无法感知。
+                    // 不直接 break：当前 startTask 消费线程实际不使用中断机制，保持行为向后兼容。
+                    Thread.currentThread().interrupt();
+                } catch (Throwable e) {
+                    CLSLog.e("DetectTcpPing", "sleep error: " + e.getMessage());
                 }
             }
             return buildResult(taskId, connectionType, netInfo, config, ip, times, index, dropped, dnsTime);
@@ -86,7 +90,8 @@ public class DetectTcpPing {
                 return o;
             } catch (Exception ignored) {
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // 兼容捕获 Error（如 OOM、UnsatisfiedLinkError），避免探测线程因未捕异常直接终止
            CLSLog.printStackTrace(e);
         }
         return null;
@@ -111,16 +116,19 @@ public class DetectTcpPing {
             CLSLog.printStackTrace(e);
             throw e;
         } finally {
-            if (socket != null) {
+            // 先关 OutputStream（会 flush），再关 Socket。
+            // 不能先关 Socket 后再关 OutputStream：那样 OutputStream.close() 内部可能 flush 到已关闭的 socket，
+            // 既会抛 IOException，也可能在 “一个 fd 多个封装线” 的情况下触发意外行为。
+            if (outputStream != null) {
                 try {
-                    socket.close();
+                    outputStream.close();
                 } catch (IOException e) {
                     CLSLog.printStackTrace(e);
                 }
             }
-            if (outputStream != null) {
+            if (socket != null) {
                 try {
-                    outputStream.close();
+                    socket.close();
                 } catch (IOException e) {
                     CLSLog.printStackTrace(e);
                 }
